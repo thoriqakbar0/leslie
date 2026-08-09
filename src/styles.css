@@ -1,8 +1,15 @@
 :root {
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-optical-sizing: auto;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --text-caption: 0.8125rem;
+  --text-ui: 0.875rem;
+  --text-body: 1rem;
+  --text-heading: 1.125rem;
+  --text-title: 1.5rem;
+  --text-display: 2.25rem;
   --accent: #d98b11;
   --accent-strong: #e5910a;
   --accent-label: #bf7304;
@@ -50,7 +57,12 @@ body {
   min-height: 100vh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--desktop-surface);
+}
+
+[hidden] {
+  display: none !important;
 }
 
 button,
@@ -66,8 +78,13 @@ button {
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(217, 139, 17, 0.42);
+  outline: 2px solid;
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .desktop {
@@ -150,6 +167,10 @@ textarea:focus-visible {
   grid-template-rows: 72px 64px 60px 0 66px;
 }
 
+.focus-window.history-open {
+  grid-template-rows: 72px minmax(0, 1fr);
+}
+
 .titlebar {
   display: grid;
   grid-template-columns: 112px 1fr auto;
@@ -195,10 +216,12 @@ textarea:focus-visible {
 
 .app-name {
   align-self: center;
+  margin: 0;
   color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 590;
-  letter-spacing: -0.24px;
+  font-size: var(--text-heading);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .window-actions {
@@ -217,8 +240,8 @@ textarea:focus-visible {
 }
 
 .icon-button {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: 8px;
 }
@@ -230,6 +253,11 @@ textarea:focus-visible {
 
 .pin-button.active {
   color: var(--control-text);
+}
+
+.history-button.active {
+  background: var(--accent-hover);
+  color: var(--accent-label);
 }
 
 .menu-anchor {
@@ -252,7 +280,7 @@ textarea:focus-visible {
 .menu-label {
   margin: 5px 10px 4px;
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -260,7 +288,7 @@ textarea:focus-visible {
 
 .session-menu button {
   width: 100%;
-  min-height: 34px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -283,7 +311,7 @@ textarea:focus-visible {
 
 .session-menu kbd {
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 
 .menu-divider {
@@ -333,8 +361,8 @@ textarea:focus-visible {
 .panel-fold-button {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 9px;
 }
 
@@ -395,10 +423,10 @@ textarea:focus-visible {
   height: 42px;
   margin-top: 0;
   padding-inline-end: 48px;
-  font-size: 33px;
+  font-size: 2rem;
   font-weight: 600;
-  letter-spacing: -0.8px;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
 }
 
 .session-purpose {
@@ -407,8 +435,10 @@ textarea:focus-visible {
   max-height: 76px;
   margin-top: 4px;
   color: var(--muted);
-  font-size: 19px;
-  line-height: 1.35;
+  font-size: var(--text-heading);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
   field-sizing: content;
 }
 
@@ -422,10 +452,10 @@ textarea:focus-visible {
 .timer {
   margin: 0;
   color: var(--text-primary);
-  font-size: 38px;
+  font-size: var(--text-display);
   font-variant-numeric: tabular-nums;
   font-weight: 360;
-  letter-spacing: -1.2px;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
@@ -435,11 +465,18 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 52px;
-  padding: 6px 7px 6px 14px;
+  min-height: 60px;
+  padding: 7px 8px 7px 16px;
   border: 1px solid var(--control-border);
   border-radius: 12px;
   background: var(--field-surface);
+}
+
+.timer-strip {
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .timer-readout {
@@ -450,7 +487,7 @@ textarea:focus-visible {
 
 .timer-readout span {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-caption);
   font-weight: 520;
 }
 
@@ -459,8 +496,8 @@ textarea:focus-visible {
 }
 
 .timer-toggle-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: 0;
@@ -477,8 +514,8 @@ textarea:focus-visible {
 }
 
 .timer-reset-button {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -496,6 +533,10 @@ textarea:focus-visible {
 
 .timer-toggle-button:hover {
   background: var(--accent-strong);
+}
+
+.timer-action-icon.play {
+  transform: translateX(1px);
 }
 
 .timer-complete {
@@ -526,7 +567,7 @@ textarea:focus-visible {
 }
 
 .timer-complete-actions button {
-  min-height: 36px;
+  min-height: 40px;
   padding-inline: 11px;
   border: 0;
   border-radius: 8px;
@@ -563,23 +604,19 @@ textarea:focus-visible {
 }
 
 .library-button {
-  width: 76px;
-  flex: 0 0 76px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  margin-inline: 7px 5px;
   padding: 0;
   border: 0;
-  border-inline-end: 1px solid var(--line);
+  border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-}
-
-.library-button span {
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .library-button:hover,
@@ -632,9 +669,9 @@ textarea:focus-visible {
   z-index: 1;
   inset-block-start: 50%;
   inset-inline-end: 7px;
-  width: 25px;
-  min-width: 25px;
-  height: 25px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -649,7 +686,7 @@ textarea:focus-visible {
 }
 
 .tab-shell button.selected {
-  padding-inline-end: 36px;
+  padding-inline-end: 46px;
 }
 
 .tab-shell button::after {
@@ -673,7 +710,7 @@ textarea:focus-visible {
 
 .tab-rename-input {
   width: calc(100% - 16px);
-  height: 34px;
+  height: 40px;
   align-self: center;
   margin: 0 8px;
   padding: 0 8px;
@@ -719,9 +756,11 @@ textarea:focus-visible {
   background: transparent;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 18px;
+  font-size: var(--text-heading);
   font-weight: 400;
-  line-height: 1.42;
+  line-height: 1.5;
+  caret-color: var(--accent-strong);
+  overflow-wrap: break-word;
   resize: none;
 }
 
@@ -734,6 +773,12 @@ textarea:focus-visible {
 
 .note-writing-area textarea {
   min-height: 0;
+}
+
+.note-writing-area:focus-within {
+  outline: 2px solid;
+  outline-offset: 5px;
+  border-radius: 4px;
 }
 
 .save-status {
@@ -798,7 +843,7 @@ textarea:focus-visible {
 
 .folder-group h3 button {
   width: 100%;
-  min-height: 34px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -900,6 +945,7 @@ textarea:focus-visible {
 }
 
 .empty-workspace button {
+  min-height: 40px;
   margin-block-start: 8px;
   padding: 8px 12px;
   border: 1px solid var(--control-border);
@@ -907,6 +953,142 @@ textarea:focus-visible {
   background: var(--control-surface);
   color: var(--text-primary);
   cursor: pointer;
+}
+
+.history-screen {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  color: var(--text-primary);
+}
+
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 34px 12px;
+}
+
+.history-heading h2 {
+  margin: 2px 0 0;
+  font-size: var(--text-title);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.history-eyebrow {
+  color: var(--text-tertiary);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.history-heading button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.history-heading button:hover {
+  background: var(--neutral-hover);
+  color: var(--text-primary);
+}
+
+.history-summary {
+  margin: 0;
+  padding: 0 34px 22px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-secondary);
+  font-size: var(--text-ui);
+  line-height: 1.5;
+}
+
+.history-list {
+  margin: 0;
+  padding: 10px 24px 24px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.history-list li {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.history-list li + li {
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.history-kind-dot {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--status-neutral);
+}
+
+.history-kind-dot.focus {
+  background: var(--accent);
+}
+
+.history-entry-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.history-entry-copy strong {
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.history-entry-copy time {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.history-empty {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 28px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.history-empty strong {
+  color: var(--text-primary);
+  font-size: var(--text-heading);
+}
+
+.history-empty span {
+  max-width: 30ch;
+  font-size: var(--text-ui);
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .statusbar {
@@ -940,6 +1122,8 @@ textarea:focus-visible {
 }
 
 .statusbar button {
+  min-width: 40px;
+  min-height: 40px;
   padding: 8px;
   border: 0;
   border-radius: 7px;
@@ -980,7 +1164,7 @@ textarea:focus-visible {
 .shortcut-hint {
   margin-left: 5px;
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 
 .sr-only {
@@ -995,6 +1179,10 @@ textarea:focus-visible {
 }
 
 @media (max-height: 900px) {
+  .focus-window.history-open {
+    grid-template-rows: 64px minmax(0, 1fr);
+  }
+
   .focus-window {
     top: 24px;
     height: calc(100vh - 48px);
@@ -1041,6 +1229,10 @@ textarea:focus-visible {
 }
 
 @media (max-height: 650px) and (min-width: 621px) {
+  .focus-window.history-open {
+    grid-template-rows: 56px minmax(0, 1fr);
+  }
+
   .focus-window {
     top: 12px;
     height: calc(100vh - 24px);
@@ -1102,6 +1294,10 @@ textarea:focus-visible {
     border-radius: 16px;
   }
 
+  .focus-window.history-open {
+    grid-template-rows: 60px minmax(0, 1fr);
+  }
+
   .focus-window.session-folded {
     grid-template-rows: 60px 58px 54px minmax(174px, 1fr) 58px;
   }
@@ -1119,8 +1315,8 @@ textarea:focus-visible {
   }
 
   .titlebar {
-    grid-template-columns: 82px 1fr auto;
-    padding-right: 10px;
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    padding-inline: 0 8px;
   }
 
   .window-actions {
@@ -1128,8 +1324,8 @@ textarea:focus-visible {
   }
 
   .icon-button {
-    width: 28px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   .traffic-lights {
@@ -1142,7 +1338,10 @@ textarea:focus-visible {
   }
 
   .app-name {
-    font-size: 17px;
+    overflow: hidden;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .session-panel {
@@ -1213,12 +1412,22 @@ textarea:focus-visible {
   }
 
   .library-button {
-    width: 48px;
-    flex-basis: 48px;
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    margin-inline: 5px 3px;
   }
 
-  .library-button span {
-    display: none;
+  .history-heading {
+    padding: 24px 24px 10px;
+  }
+
+  .history-summary {
+    padding: 0 24px 18px;
+  }
+
+  .history-list {
+    padding-inline: 14px;
   }
 
   .note-editor {
@@ -1234,11 +1443,19 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: no-preference) {
   .timer-toggle-button,
   .icon-button,
+  .library-button,
   .add-tab-button,
   .statusbar button {
     transition:
       background-color 140ms ease,
       color 140ms ease,
       transform 140ms ease;
+  }
+
+  .timer-toggle-button:active,
+  .icon-button:active,
+  .library-button:active,
+  .add-tab-button:active {
+    transform: scale(0.96);
   }
 }

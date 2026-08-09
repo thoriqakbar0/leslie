@@ -19,3 +19,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Let users choose a break, continue focusing, or finish when a session ends.
 - Treat folders as the permanent note library and tabs as the temporary workspace.
 - Keep note folders foldable, show note save status, and support standard tab keyboard navigation.
+- Use a restrained role-based type scale, tabular timer digits, and readable body line spacing.
+- Keep keyboard focus visible and use at least 40px desktop targets, with 44px primary timer controls.
+- Show timer history as a full-window view from the titlebar, separate from note tabs.
+- Record only completed focus or break timers in history.

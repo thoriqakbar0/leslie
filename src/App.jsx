@@ -4,6 +4,7 @@ import {
   CaretDown,
   CaretUp,
   Check,
+  ClockCounterClockwise,
   DotsThree,
   FolderOpen,
   FolderSimple,
@@ -17,10 +18,16 @@ import {
   Sun,
   X,
 } from "@phosphor-icons/react";
+import {
+  createTimerRunId,
+  parseTimerHistory,
+  recordCompletedTimer,
+} from "./timer-history.js";
 
 const STORAGE_KEY = "focus-dock-prototype-v3";
 const THEME_KEY = "focus-dock-theme";
 const DEFAULT_DURATION = 25 * 60;
+const DEFAULT_BREAK_DURATION = 5 * 60;
 
 const defaultState = {
   title: "Onboarding flow",
@@ -30,6 +37,9 @@ const defaultState = {
   remaining: 24 * 60 + 18,
   timerStatus: "running",
   timerKind: "focus",
+  timerRunDuration: DEFAULT_DURATION,
+  timerRunId: createTimerRunId(),
+  timerHistory: [],
   endsAt: Date.now() + (24 * 60 + 18) * 1000,
   selectedNoteId: "session",
   loadedNoteIds: ["session", "ideas"],
@@ -134,6 +144,21 @@ function parseStoredState(value) {
       ? value.timerStatus
       : defaultState.timerStatus,
     timerKind: value.timerKind === "break" ? "break" : "focus",
+    timerRunDuration:
+      Number.isFinite(value.timerRunDuration) && value.timerRunDuration > 0
+        ? value.timerRunDuration
+        : value.timerKind === "break"
+          ? DEFAULT_BREAK_DURATION
+          : Number.isFinite(value.duration) && value.duration > 0
+            ? value.duration
+            : DEFAULT_DURATION,
+    timerRunId:
+      typeof value.timerRunId === "string"
+        ? value.timerRunId
+        : value.timerStatus === "running"
+          ? createTimerRunId(Number.isFinite(value.endsAt) ? value.endsAt : Date.now())
+          : null,
+    timerHistory: parseTimerHistory(value.timerHistory),
     endsAt:
       value.timerStatus === "running" && Number.isFinite(value.endsAt)
         ? value.endsAt
@@ -185,8 +210,64 @@ function getTimerStatusLabel(status, kind) {
   return status === "running" ? "Focus session" : "Session paused";
 }
 
+function formatHistoryDate(value) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function TimerHistoryView({ history, onClose }) {
+  const focusMinutes = history
+    .filter((entry) => entry.kind === "focus")
+    .reduce((total, entry) => total + Math.round(entry.duration / 60), 0);
+
+  return (
+    <section
+      className="history-screen"
+      aria-labelledby="history-title"
+      aria-describedby="history-description"
+    >
+      <header className="history-heading">
+        <div>
+          <span className="history-eyebrow">timer activity</span>
+          <h2 id="history-title">history</h2>
+        </div>
+        <button type="button" aria-label="Close timer history" onClick={onClose}>
+          <X size={20} weight="bold" aria-hidden="true" />
+        </button>
+      </header>
+      <p id="history-description" className="history-summary">
+        {history.length === 0
+          ? "Completed timers will appear here."
+          : `${history.length} completed · ${focusMinutes} focus minutes`}
+      </p>
+      {history.length === 0 ? (
+        <div className="history-empty">
+          <ClockCounterClockwise size={30} aria-hidden="true" />
+          <strong>no completed timers</strong>
+          <span>finish a focus timer or break to add the first entry.</span>
+        </div>
+      ) : (
+        <ol className="history-list">
+          {history.map((entry) => (
+            <li key={entry.id}>
+              <span className={`history-kind-dot ${entry.kind}`} aria-hidden="true" />
+              <span className="history-entry-copy">
+                <strong>{Math.round(entry.duration / 60)} min {entry.kind}</strong>
+                <time dateTime={entry.completedAt}>{formatHistoryDate(entry.completedAt)}</time>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 function SessionTimer({
-  duration,
   kind,
   remaining,
   status,
@@ -225,17 +306,13 @@ function SessionTimer({
   return (
     <div className="timer-strip">
       <div className="timer-readout">
-        <time className="timer" dateTime={`PT${remaining}S`}>
+        <time
+          className="timer"
+          dateTime={`PT${remaining}S`}
+          aria-label={`${formatTime(remaining)} remaining`}
+        >
           {formatTime(remaining)}
         </time>
-        <span className="timer-meta">
-          {kind === "break" ? "break" : status === "running" ? "focusing" : "paused"}
-          {kind === "focus" && (
-            <span className="timer-duration-meta">
-              {` · ${Math.round(duration / 60)} min`}
-            </span>
-          )}
-        </span>
       </div>
       <div className="timer-controls">
         {status === "paused" && (
@@ -255,9 +332,9 @@ function SessionTimer({
           onClick={onToggle}
         >
           {status === "running" ? (
-            <Pause size={23} weight="fill" />
+            <Pause className="timer-action-icon" size={23} weight="fill" />
           ) : (
-            <Play size={23} weight="fill" />
+            <Play className="timer-action-icon play" size={23} weight="fill" />
           )}
         </button>
       </div>
@@ -274,6 +351,7 @@ export function App() {
   const [isSessionFolded, setIsSessionFolded] = useState(false);
   const [isNotesFolded, setIsNotesFolded] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [renamingNoteId, setRenamingNoteId] = useState(null);
   const [expandedFolderIds, setExpandedFolderIds] = useState([]);
   const [noteSaveStatus, setNoteSaveStatus] = useState("saved");
@@ -281,6 +359,7 @@ export function App() {
   const [position, setPosition] = useState(null);
   const dragState = useRef(null);
   const menuRef = useRef(null);
+  const historyButtonRef = useRef(null);
   const noteSaveTimerRef = useRef(null);
   const tabRefs = useRef(new Map());
 
@@ -320,7 +399,19 @@ export function App() {
       setAppState((current) => {
         if (current.timerStatus !== "running") return current;
         if (remaining === 0) {
-          return { ...current, remaining: 0, timerStatus: "completed", endsAt: null };
+          const completedEntry = {
+            id: current.timerRunId ?? createTimerRunId(),
+            kind: current.timerKind,
+            duration: current.timerRunDuration,
+            completedAt: new Date().toISOString(),
+          };
+          return {
+            ...current,
+            remaining: 0,
+            timerStatus: "completed",
+            endsAt: null,
+            timerHistory: recordCompletedTimer(current.timerHistory, completedEntry),
+          };
         }
         return current.remaining === remaining ? current : { ...current, remaining };
       });
@@ -342,7 +433,10 @@ export function App() {
         event.preventDefault();
         setIsVisible((visible) => !visible);
       }
-      if (event.key === "Escape") setIsMenuOpen(false);
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        setIsHistoryOpen(false);
+      }
     };
 
     window.addEventListener("keydown", handleShortcut);
@@ -379,6 +473,8 @@ export function App() {
       remaining: duration,
       timerStatus: "running",
       timerKind: kind,
+      timerRunDuration: duration,
+      timerRunId: createTimerRunId(),
       endsAt: Date.now() + duration * 1000,
     });
   };
@@ -403,6 +499,8 @@ export function App() {
         ...current,
         remaining,
         timerStatus: "running",
+        timerRunDuration: current.timerRunDuration || remaining,
+        timerRunId: current.timerRunId ?? createTimerRunId(),
         endsAt: Date.now() + remaining * 1000,
       };
     });
@@ -413,6 +511,8 @@ export function App() {
       remaining: appState.duration,
       timerStatus: "paused",
       timerKind: "focus",
+      timerRunDuration: appState.duration,
+      timerRunId: null,
       endsAt: null,
     });
     setAnnouncement("Timer reset.");
@@ -424,6 +524,8 @@ export function App() {
       remaining: appState.duration,
       timerStatus: "paused",
       timerKind: "focus",
+      timerRunDuration: appState.duration,
+      timerRunId: null,
       endsAt: null,
     });
     setAnnouncement("Session finished. Timer ready for another focus session.");
@@ -435,6 +537,8 @@ export function App() {
       remaining: minutes * 60,
       timerStatus: "paused",
       timerKind: "focus",
+      timerRunDuration: minutes * 60,
+      timerRunId: null,
       endsAt: null,
     });
     setAnnouncement(`${minutes}-minute timer ready.`);
@@ -594,8 +698,8 @@ export function App() {
   return (
     <main className="desktop" data-theme={theme}>
       <section
-        className={`focus-window ${isSessionFolded ? "session-folded" : ""} ${isNotesFolded ? "notes-folded" : ""}`}
-        aria-label="Focus Dock"
+        className={`focus-window ${isHistoryOpen ? "history-open" : ""} ${!isHistoryOpen && isSessionFolded ? "session-folded" : ""} ${!isHistoryOpen && isNotesFolded ? "notes-folded" : ""}`}
+        aria-label="Ludwig"
         style={position ? { left: position.x, top: position.y, transform: "none" } : undefined}
       >
         <header
@@ -610,7 +714,7 @@ export function App() {
             <span className="traffic-light minimize" />
             <span className="traffic-light maximize" />
           </div>
-          <span className="app-name">Focus Dock</span>
+          <h1 className="app-name" translate="no">Ludwig</h1>
           <div className="window-actions">
             <button
               className="icon-button theme-button"
@@ -628,6 +732,23 @@ export function App() {
               ) : (
                 <Moon size={21} weight="regular" />
               )}
+            </button>
+            <button
+              ref={historyButtonRef}
+              className={`icon-button history-button ${isHistoryOpen ? "active" : ""}`}
+              type="button"
+              aria-label={isHistoryOpen ? "Close timer history" : "Open timer history"}
+              aria-pressed={isHistoryOpen}
+              onClick={() => {
+                setIsHistoryOpen((open) => !open);
+                setIsMenuOpen(false);
+              }}
+            >
+              <ClockCounterClockwise
+                size={21}
+                weight={isHistoryOpen ? "fill" : "regular"}
+                aria-hidden="true"
+              />
             </button>
             <button
               className={`icon-button pin-button ${isPinned ? "active" : ""}`}
@@ -652,12 +773,11 @@ export function App() {
                 <DotsThree size={26} weight="bold" />
               </button>
               {isMenuOpen && (
-                <div className="session-menu" role="menu">
+                <div className="session-menu">
                   <p className="menu-label">timer length</p>
                   {[25, 50].map((minutes) => (
                     <button
                       type="button"
-                      role="menuitem"
                       key={minutes}
                       onClick={() => selectDuration(minutes)}
                     >
@@ -665,16 +785,26 @@ export function App() {
                       {appState.duration === minutes * 60 && <Check size={16} />}
                     </button>
                   ))}
-                  <button type="button" role="menuitem" onClick={resetTimer}>
+                  <button type="button" onClick={resetTimer}>
                     <ArrowCounterClockwise size={17} />
                     <span>reset timer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsHistoryOpen(true);
+                      window.requestAnimationFrame(() => historyButtonRef.current?.focus());
+                    }}
+                  >
+                    <ClockCounterClockwise size={17} aria-hidden="true" />
+                    <span>timer history</span>
                   </button>
                   {selectedNote && (
                     <>
                       <div className="menu-divider" />
                       <button
                         type="button"
-                        role="menuitem"
                         onClick={() => {
                           setRenamingNoteId(selectedNote.id);
                           setIsMenuOpen(false);
@@ -686,7 +816,7 @@ export function App() {
                     </>
                   )}
                   <div className="menu-divider" />
-                  <button type="button" role="menuitem" onClick={() => setIsVisible(false)}>
+                  <button type="button" onClick={() => setIsVisible(false)}>
                     <X size={17} />
                     <span>hide window</span>
                     <kbd>⌘⇧Space</kbd>
@@ -701,6 +831,7 @@ export function App() {
           id="session-panel"
           className={`session-panel ${isSessionFolded ? "is-folded" : ""}`}
           aria-labelledby="session-title"
+          hidden={isHistoryOpen}
         >
           {isSessionFolded ? (
             <button
@@ -746,13 +877,12 @@ export function App() {
                 />
               </div>
               <SessionTimer
-                duration={appState.duration}
                 kind={appState.timerKind}
                 remaining={appState.remaining}
                 status={appState.timerStatus}
                 onToggle={toggleTimer}
                 onReset={resetTimer}
-                onStartBreak={() => startTimer(5 * 60, "break")}
+                onStartBreak={() => startTimer(DEFAULT_BREAK_DURATION, "break")}
                 onContinue={() => startTimer(appState.duration, "focus")}
                 onFinish={finishSession}
               />
@@ -760,7 +890,7 @@ export function App() {
           )}
         </section>
 
-        <nav className="tabs" aria-label="Notes">
+        <nav className="tabs" aria-label="Notes" hidden={isHistoryOpen}>
           <button
             className={`library-button ${isLibraryOpen ? "selected" : ""}`}
             type="button"
@@ -773,7 +903,6 @@ export function App() {
             }}
           >
             <FolderOpen size={22} weight={isLibraryOpen ? "fill" : "regular"} />
-            <span>notes</span>
           </button>
           <div className="tab-list" role="tablist">
             {loadedNotes.length === 0 && (
@@ -848,7 +977,12 @@ export function App() {
           </button>
         </nav>
 
-        <section id="note-editor" className="note-editor" aria-hidden={isNotesFolded}>
+        <section
+          id="note-editor"
+          className="note-editor"
+          aria-hidden={isNotesFolded || isHistoryOpen}
+          hidden={isHistoryOpen}
+        >
           {!isNotesFolded && isLibraryOpen && (
             <div className="note-library">
               <header className="library-heading">
@@ -934,7 +1068,7 @@ export function App() {
           )}
         </section>
 
-        <footer className="statusbar">
+        <footer className="statusbar" hidden={isHistoryOpen}>
           <span className="status-label">
             <span className={`status-dot ${appState.timerStatus === "running" ? "running" : ""}`} />
             {getTimerStatusLabel(appState.timerStatus, appState.timerKind)}
@@ -943,6 +1077,15 @@ export function App() {
             {Math.round(appState.duration / 60)} min
           </button>
         </footer>
+        {isHistoryOpen && (
+          <TimerHistoryView
+            history={appState.timerHistory}
+            onClose={() => {
+              setIsHistoryOpen(false);
+              window.requestAnimationFrame(() => historyButtonRef.current?.focus());
+            }}
+          />
+        )}
       </section>
       <p className="sr-only" aria-live="polite">{announcement}</p>
     </main>
