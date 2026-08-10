@@ -292,59 +292,57 @@ body:has(.notes-sidebar) {
   grid-template-rows: auto minmax(0, 1fr);
   border-left: 1px solid var(--line);
   background: var(--paper);
-  box-shadow: -18px 0 54px var(--shadow-panel);
+  box-shadow: -8px 0 28px color-mix(in srgb, var(--shadow-panel) 58%, transparent);
 }
 
 .notes-sidebar-header {
-  min-height: 122px;
+  min-height: 104px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 30px 52px;
-  border-bottom: 1px solid var(--line);
+  padding: 26px 52px 20px;
 }
 
 .notes-sidebar-header h2 {
   margin: 0;
-  font: 500 42px/1 var(--serif);
-  letter-spacing: -0.025em;
+  font: 500 34px/1.05 var(--serif);
+  letter-spacing: -0.02em;
 }
 
 .notes-sidebar-header p {
   max-width: 720px;
-  margin: 9px 0 0;
+  margin: 6px 0 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .notes-sidebar-header button {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   flex: none;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--muted);
+  color: var(--faint);
   cursor: pointer;
 }
 
 .notes-sidebar-header button:hover,
 .notes-sidebar-header button:focus-visible {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  background: var(--selected);
   color: var(--accent);
 }
 
 .notes-sidebar-header svg {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -356,9 +354,9 @@ body:has(.notes-sidebar) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 24px;
+  gap: 18px;
   overflow: hidden;
-  padding: 38px 52px 52px;
+  padding: 20px 52px 48px;
 }
 
 .rich-notes-editor {
@@ -371,7 +369,7 @@ body:has(.notes-sidebar) {
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font: 400 20px/1.65 var(--serif);
+  font: 400 18px/1.7 var(--serif);
   caret-color: var(--accent);
 }
 
@@ -445,6 +443,13 @@ body:has(.notes-sidebar) {
   margin: 0;
   color: var(--faint);
   font-size: 12px;
+}
+
+.notes-format-hint kbd {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
 }
 
 .page-header,
@@ -1614,7 +1619,7 @@ input:focus-visible {
   }
 
   .notes-sidebar-header h2 {
-    font-size: 36px;
+    font-size: 30px;
   }
 
   .notes-editor {
