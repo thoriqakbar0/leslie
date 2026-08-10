@@ -22,6 +22,9 @@ describe("Notes sidebar", () => {
     expect(html).toContain('data-placeholder="Write notes…"');
     expect(html).toContain("- []</kbd> checklist");
     expect(html).toContain("Send the invoice");
+    expect(html.indexOf('class="notes-format-hint"')).toBeLessThan(
+      html.indexOf('id="notes-rich-editor"'),
+    );
   });
 
   it("renders markdown as rich notes without storing html", () => {

@@ -127,6 +127,10 @@ export function NotesSidebar({ notes, onClose, onNotesChange, taskTitle }: Notes
         </button>
       </header>
       <div className="notes-editor">
+        <p className="notes-format-hint">
+          <kbd>-</kbd> list <span aria-hidden="true">·</span> <kbd>- []</kbd> checklist{" "}
+          <span aria-hidden="true">·</span> <kbd>#</kbd> heading
+        </p>
         <div
           aria-label={`Notes for ${taskTitle}`}
           aria-multiline="true"
@@ -145,10 +149,6 @@ export function NotesSidebar({ notes, onClose, onNotesChange, taskTitle }: Notes
           role="textbox"
           suppressContentEditableWarning
         />
-        <p className="notes-format-hint">
-          <kbd>-</kbd> list <span aria-hidden="true">·</span> <kbd>- []</kbd> checklist{" "}
-          <span aria-hidden="true">·</span> <kbd>#</kbd> heading
-        </p>
       </div>
     </aside>
   );
