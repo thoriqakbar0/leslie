@@ -353,31 +353,96 @@ body:has(.notes-sidebar) {
 
 .notes-editor {
   min-height: 0;
-  display: flex;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
   padding: 38px 52px 52px;
 }
 
-.notes-editor textarea {
-  flex: 1;
+.rich-notes-editor {
   width: 100%;
-  height: auto;
   min-height: 0;
+  overflow-y: auto;
   padding: 0;
-  resize: none;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--ink);
   font: 400 20px/1.65 var(--serif);
+  caret-color: var(--accent);
 }
 
-.notes-editor textarea::placeholder {
+.rich-notes-editor:empty::before {
+  content: attr(data-placeholder);
   color: var(--faint);
+  pointer-events: none;
 }
 
-.notes-editor textarea:focus-visible {
+.rich-notes-editor:focus-visible {
   outline: 0;
+}
+
+.rich-notes-editor p,
+.rich-notes-editor h2,
+.rich-notes-editor h3,
+.rich-notes-editor blockquote,
+.rich-notes-editor ul {
+  margin: 0 0 0.8em;
+}
+
+.rich-notes-editor h2 {
+  font: 500 32px/1.15 var(--serif);
+}
+
+.rich-notes-editor h3 {
+  font: 500 24px/1.2 var(--serif);
+}
+
+.rich-notes-editor blockquote {
+  padding-inline-start: 18px;
+  border-inline-start: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+.rich-notes-editor ul {
+  padding-inline-start: 1.4em;
+}
+
+.rich-notes-editor .rich-checklist {
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.rich-checklist li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.rich-checklist input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.rich-notes-editor code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--selected);
+  font:
+    0.82em/1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+
+.notes-format-hint {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .page-header,
