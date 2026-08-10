@@ -1,0 +1,108 @@
+.worklog-prototype {
+  --leslie-paper: #fbf9f4;
+  --leslie-ink: #07162d;
+  --leslie-muted: #586274;
+  --leslie-faint: #a59d91;
+  --leslie-line: #ded7ca;
+  --leslie-accent: #cf5428;
+  --leslie-serif: "Iowan Old Style", "Baskerville", Georgia, serif;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  position: relative;
+  background: var(--leslie-paper);
+  color: var(--leslie-ink);
+  font-family: "Avenir Next", Avenir, system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.worklog-prototype *, .worklog-prototype *::before, .worklog-prototype *::after { box-sizing: border-box; }
+.worklog-prototype button, .worklog-prototype input, .worklog-prototype select { font: inherit; }
+.worklog-prototype button { color: inherit; }
+.leslie-sidebar { border-right: 1px solid var(--leslie-line); padding: 36px 32px; }
+.leslie-wordmark { margin-bottom: 50px; font: 500 34px/1 var(--leslie-serif); }
+.leslie-sidebar nav { display: grid; }
+.leslie-sidebar nav button { position: relative; height: 72px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--leslie-line); background: transparent; text-align: left; font-size: 18px; cursor: pointer; }
+.leslie-sidebar nav button:last-child { border-bottom: 0; }
+.leslie-sidebar nav button.active, .leslie-sidebar nav button:hover { color: var(--leslie-accent); }
+.leslie-sidebar nav button.active::before { content: ""; position: absolute; left: -9px; top: 14px; bottom: 14px; width: 4px; border-radius: 3px; background: var(--leslie-accent); }
+.leslie-sidebar nav .leslie-add-list { color: var(--leslie-faint); font-size: 26px; }
+.leslie-sidebar nav .leslie-add-list:hover { color: var(--leslie-accent); }
+.leslie-new-list { height: 72px; display: flex; align-items: center; border-bottom: 1px solid var(--leslie-line); }
+.leslie-new-list input { width: 100%; min-width: 0; padding: 10px 12px; border: 0; outline: 0; background: transparent; color: var(--leslie-ink); font-size: 17px; }
+.leslie-new-list input::placeholder { color: var(--leslie-faint); }
+.leslie-new-list-submit { flex: 0 0 32px; height: 40px; padding: 0; border: 0; background: transparent; color: var(--leslie-accent); font-size: 22px; cursor: pointer; }
+.leslie-workspace { min-width: 0; padding: 42px clamp(32px, 6vw, 88px) 72px; }
+.leslie-page-header, .leslie-stream { width: min(100%, 920px); margin-inline: auto; }
+.leslie-page-header { margin-bottom: 36px; }
+.leslie-time-scale { max-width: 100%; margin: 0; border: 0; outline: 0; background: transparent; color: var(--leslie-ink); font: 500 clamp(58px, 6vw, 82px)/.95 var(--leslie-serif); letter-spacing: -.035em; cursor: pointer; }
+.leslie-page-header p { margin: 12px 0 0; color: var(--leslie-muted); font-size: 16px; }
+.leslie-capture-section { margin-bottom: 38px; }
+.leslie-capture-box { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; min-height: 70px; border: 1px solid var(--leslie-line); border-radius: 8px; overflow: hidden; }
+.leslie-capture-box.planned { grid-template-columns: auto minmax(0, 1fr) 82px 74px; }
+.leslie-capture-box:focus-within { border-color: var(--leslie-accent); }
+.leslie-capture-mode { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; padding: 7px; gap: 3px; border-right: 1px solid var(--leslie-line); }
+.leslie-capture-mode button { min-width: 72px; padding: 0 13px; border: 0; border-radius: 5px; background: transparent; color: var(--leslie-muted); font-size: 14px; cursor: pointer; }
+.leslie-capture-mode button.active { background: #efe9df; color: var(--leslie-accent); }
+.leslie-capture-box input { min-width: 0; height: 68px; padding: 0 20px; border: 0; outline: 0; background: transparent; color: var(--leslie-ink); font-size: 18px; }
+.leslie-capture-box input::placeholder { color: var(--leslie-faint); }
+.leslie-capture-box select { width: 82px; border: 0; outline: 0; background: transparent; color: var(--leslie-muted); font-size: 13px; }
+.leslie-capture-submit { align-self: stretch; min-width: 68px; padding: 0 18px; border: 0; border-left: 1px solid var(--leslie-line); background: transparent; color: var(--leslie-accent); font-size: 14px; cursor: pointer; }
+.leslie-capture-hint { margin: 9px 2px 0; color: var(--leslie-faint); font-size: 12px; }
+.worklog-prototype kbd { padding: 1px 5px; border: 1px solid var(--leslie-line); border-radius: 4px; background: transparent; font: inherit; }
+.leslie-activity-feed { border-top: 1px solid var(--leslie-line); border-bottom: 1px solid var(--leslie-line); }
+.leslie-activity-row { min-height: 82px; display: grid; align-items: center; gap: 18px; border-bottom: 1px solid var(--leslie-line); }
+.leslie-activity-row:last-child { border-bottom: 0; }
+.leslie-planned-row { grid-template-columns: 38px minmax(0, 1fr) 82px 0; }
+.leslie-planned-row:hover { grid-template-columns: 38px minmax(0, 1fr) 82px 54px; }
+.leslie-log-row { grid-template-columns: 74px minmax(0, 1fr); }
+.leslie-check { width: 34px; height: 34px; border: 1.4px solid #80796f; border-radius: 50%; background: transparent; cursor: pointer; }
+.leslie-check:hover { border-color: var(--leslie-accent); }
+.leslie-activity-copy { min-width: 0; }
+.leslie-activity-copy strong { display: block; overflow: hidden; font: 500 20px/1.25 var(--leslie-serif); text-overflow: ellipsis; white-space: nowrap; }
+.leslie-activity-copy p { margin: 0; font-size: 15px; line-height: 1.45; }
+.leslie-activity-kind { display: block; margin-bottom: 4px; color: var(--leslie-accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.leslie-log-row .leslie-activity-kind { color: var(--leslie-muted); }
+.leslie-log-row time { color: var(--leslie-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.leslie-estimate-select { width: 82px; border: 0; outline: 0; background: transparent; color: var(--leslie-muted); font-size: 13px; text-align: right; cursor: pointer; }
+.leslie-remove { width: 0; overflow: hidden; padding: 8px 0; border: 0; background: transparent; color: transparent; font-size: 12px; cursor: pointer; }
+.leslie-planned-row:hover .leslie-remove, .leslie-remove:focus-visible { width: 54px; color: var(--leslie-accent); }
+.leslie-toast { position: fixed; right: 28px; bottom: 28px; display: flex; align-items: center; gap: 24px; padding: 15px 18px; border: 1px solid var(--leslie-line); border-radius: 8px; background: var(--leslie-ink); color: white; font-size: 14px; }
+.leslie-toast button { border: 0; background: transparent; color: #f28a64; cursor: pointer; }
+.worklog-prototype button:focus-visible, .worklog-prototype select:focus-visible { outline: 2px solid var(--leslie-accent); outline-offset: 3px; }
+.leslie-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 980px) {
+  .worklog-prototype { display: block; }
+  .leslie-sidebar { padding: 22px 28px 0; border-right: 0; border-bottom: 1px solid var(--leslie-line); }
+  .leslie-wordmark { margin-bottom: 16px; font-size: 30px; }
+  .leslie-sidebar nav { display: flex; gap: 28px; overflow-x: auto; }
+  .leslie-sidebar nav button { flex: 0 0 auto; height: 44px; padding: 0; border: 0; font-size: 15px; }
+  .leslie-sidebar nav .leslie-add-list { width: 32px; font-size: 22px; }
+  .leslie-new-list { flex: 0 0 130px; height: 44px; border-bottom: 0; }
+  .leslie-new-list input { padding-inline: 0; font-size: 15px; }
+  .leslie-sidebar nav button.active::before { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 3px; }
+  .leslie-workspace { padding: 28px 28px 60px; }
+  .leslie-time-scale { font-size: 60px; }
+}
+
+@media (max-width: 600px) {
+  .leslie-workspace { padding: 26px 22px 54px; }
+  .leslie-time-scale { font-size: 52px; }
+  .leslie-capture-box { grid-template-columns: 1fr auto; }
+  .leslie-capture-mode { grid-column: 1 / -1; height: 48px; border-right: 0; border-bottom: 1px solid var(--leslie-line); }
+  .leslie-capture-box input { height: 58px; padding-inline: 14px; font-size: 16px; }
+  .leslie-capture-box select { width: 72px; }
+  .leslie-capture-submit { min-width: 58px; padding-inline: 12px; }
+  .leslie-capture-box.planned { grid-template-columns: minmax(0, 1fr) 72px 58px; }
+  .leslie-capture-box.planned .leslie-capture-mode { grid-column: 1 / -1; }
+  .leslie-planned-row { grid-template-columns: 34px minmax(0, 1fr) 72px; gap: 12px; }
+  .leslie-planned-row:hover { grid-template-columns: 34px minmax(0, 1fr) 72px; }
+  .leslie-remove, .leslie-planned-row:hover .leslie-remove { display: none; }
+  .leslie-activity-copy strong { white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .worklog-prototype *, .worklog-prototype *::before, .worklog-prototype *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
