@@ -946,7 +946,7 @@ body:has(.notes-sidebar) {
   border-radius: 13px;
   background: var(--capture-surface);
   box-shadow: 0 2px 5px color-mix(in srgb, var(--shadow-popover) 18%, transparent);
-  transition-property: border-color, box-shadow;
+  transition-property: box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
@@ -956,8 +956,9 @@ body:has(.notes-sidebar) {
 }
 
 .capture-box:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 72%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--faint) 32%, transparent),
+    0 2px 5px color-mix(in srgb, var(--shadow-popover) 18%, transparent);
 }
 
 .capture-mode {
@@ -1530,6 +1531,11 @@ select:focus-visible {
 input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -3px;
+}
+
+.capture-box input:focus-visible {
+  /* The form's neutral focus-within ring already identifies this focused field. */
+  outline: 0;
 }
 
 .capture-box button:focus-visible,
