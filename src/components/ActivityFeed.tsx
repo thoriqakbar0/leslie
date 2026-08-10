@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { parseEntryLabels } from "../entry-labels";
+import { isTextEntryTarget } from "../keyboard-shortcuts";
 import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
 import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
 import { taskNavigationIndex } from "../task-navigation";
@@ -49,13 +50,6 @@ function WorkLogSortIcon({ sort }: { readonly sort: WorkLogSort }) {
       <path d="M3 19h18m-6-7H3m6-7H3" />
     </svg>
   );
-}
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  if (target.closest("input, textarea, select") !== null) return true;
-  const editable = target.closest<HTMLElement>("[contenteditable]");
-  return editable !== null && editable.contentEditable !== "false";
 }
 
 function EntryLabels({ labels }: { readonly labels: readonly string[] }) {
@@ -115,7 +109,7 @@ export function ActivityFeed({
         target === globalThis.document.body ||
         target === globalThis.document.documentElement ||
         (target instanceof Element && target.closest(".leslie-app") !== null);
-      if (!isInsideLeslie || isTypingTarget(target)) return;
+      if (!isInsideLeslie || isTextEntryTarget(target)) return;
       if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
 
       const cards = Array.from(

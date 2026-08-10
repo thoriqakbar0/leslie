@@ -6,6 +6,7 @@ import { LiveClock } from "./components/LiveClock";
 import { NotesSidebar } from "./components/NotesSidebar";
 import { PlaybackBar } from "./components/PlaybackBar";
 import { Sidebar } from "./components/Sidebar";
+import { dateShortcutDirection, isTextEntryTarget } from "./keyboard-shortcuts";
 import {
   createInitialState,
   formatScaleDate,
@@ -119,6 +120,34 @@ function App() {
     globalThis.document.addEventListener("pointerdown", closeOnOutsidePointer);
     return () => globalThis.document.removeEventListener("pointerdown", closeOnOutsidePointer);
   }, [isDatePickerOpen]);
+
+  useEffect(() => {
+    function navigateDates(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        isTextEntryTarget(event.target)
+      ) {
+        return;
+      }
+      const direction = dateShortcutDirection(event.key);
+      if (direction === null) return;
+      if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
+
+      event.preventDefault();
+      setDateMotionDirection(direction === -1 ? "previous" : "next");
+      setAnchorTimestamp((current) =>
+        moveScaleDate(new Date(current), timeScale, direction).getTime(),
+      );
+    }
+
+    globalThis.document.addEventListener("keydown", navigateDates);
+    return () => globalThis.document.removeEventListener("keydown", navigateDates);
+  }, [timeScale]);
 
   useEffect(() => {
     if (document === null) return;
@@ -492,8 +521,10 @@ function App() {
             <div className="date-navigation-wrap" ref={dateNavigationRef}>
               <div className="date-navigation">
                 <button
+                  aria-keyshortcuts="H"
                   aria-label={`Previous ${scaleLabel}`}
                   onClick={() => moveDate(-1)}
+                  title={`Previous ${scaleLabel} (H)`}
                   type="button"
                 >
                   <ScaleArrow direction="previous" />
@@ -512,7 +543,13 @@ function App() {
                     {formatScaleDate(timeScale, new Date(anchorTimestamp))}
                   </span>
                 </button>
-                <button aria-label={`Next ${scaleLabel}`} onClick={() => moveDate(1)} type="button">
+                <button
+                  aria-keyshortcuts="L"
+                  aria-label={`Next ${scaleLabel}`}
+                  onClick={() => moveDate(1)}
+                  title={`Next ${scaleLabel} (L)`}
+                  type="button"
+                >
                   <ScaleArrow direction="next" />
                 </button>
               </div>
