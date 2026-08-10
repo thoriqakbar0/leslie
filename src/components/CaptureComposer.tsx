@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
+import { isTextEntryTarget } from "../keyboard-shortcuts";
 import {
   completePlannedClock,
   ESTIMATE_OPTIONS,
@@ -80,6 +81,30 @@ export function CaptureComposer({
   }, [captureInputRef, focusCaptureInput]);
 
   useEffect(() => {
+    function focusQuickCapture(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.key.toLowerCase() !== "c" ||
+        isTextEntryTarget(event.target)
+      ) {
+        return;
+      }
+      if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
+
+      event.preventDefault();
+      focusCaptureInput();
+    }
+
+    globalThis.document.addEventListener("keydown", focusQuickCapture);
+    return () => globalThis.document.removeEventListener("keydown", focusQuickCapture);
+  }, [focusCaptureInput]);
+
+  useEffect(() => {
     function selectEntryMode(event: KeyboardEvent) {
       if (event.defaultPrevented || event.isComposing) return;
       const togglesMode =
@@ -116,6 +141,7 @@ export function CaptureComposer({
       onAddPlanned(planned.title, planned.estimatedMinutes, planned.scheduledAt);
     }
     setText("");
+    focusCaptureInput();
   }
 
   return (
@@ -141,6 +167,7 @@ export function CaptureComposer({
         </label>
         <input
           aria-describedby="capture-hint"
+          aria-keyshortcuts="C"
           autoFocus
           autoComplete="off"
           id="capture-input"
@@ -192,8 +219,9 @@ export function CaptureComposer({
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>⌘⇧M</kbd> switches entry type <span aria-hidden="true">·</span> <kbd>enter</kbd> adds
-        it
+        <kbd>c</kbd> focuses quick add <span aria-hidden="true">·</span> <kbd>enter</kbd> adds it
+        <span aria-hidden="true"> · </span>
+        <kbd>⌘⇧M</kbd> switches entry type
         {mode === "planned" ? (
           <>
             {" "}
