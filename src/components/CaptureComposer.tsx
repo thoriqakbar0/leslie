@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import {
   completePlannedClock,
@@ -36,7 +36,17 @@ export function CaptureComposer({
 }: CaptureComposerProps) {
   const [text, setText] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState<EstimateMinutes>(30);
+  const hasAutoFocused = useRef(false);
   const pendingSelection = useRef<{ readonly start: number; readonly end: number } | null>(null);
+
+  const focusCaptureInput = useCallback(() => {
+    globalThis.requestAnimationFrame(() => captureInputRef.current?.focus());
+  }, [captureInputRef]);
+
+  const switchEntryMode = useCallback(() => {
+    onModeChange(mode === "planned" ? "did" : "planned");
+    focusCaptureInput();
+  }, [focusCaptureInput, mode, onModeChange]);
 
   useLayoutEffect(() => {
     const selection = pendingSelection.current;
@@ -44,6 +54,30 @@ export function CaptureComposer({
     captureInputRef.current?.setSelectionRange(selection.start, selection.end);
     pendingSelection.current = null;
   }, [captureInputRef, text]);
+
+  useEffect(() => {
+    function focusCaptureWhenIdle() {
+      if (hasAutoFocused.current || !globalThis.document.hasFocus()) return;
+      if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
+      const activeElement = globalThis.document.activeElement;
+      if (activeElement === captureInputRef.current) {
+        hasAutoFocused.current = true;
+        return;
+      }
+      const focusIsIdle =
+        activeElement === null ||
+        activeElement === globalThis.document.body ||
+        activeElement === globalThis.document.documentElement ||
+        activeElement?.id === "main-content";
+      if (!focusIsIdle) return;
+      hasAutoFocused.current = true;
+      focusCaptureInput();
+    }
+
+    focusCaptureWhenIdle();
+    globalThis.addEventListener("focus", focusCaptureWhenIdle);
+    return () => globalThis.removeEventListener("focus", focusCaptureWhenIdle);
+  }, [captureInputRef, focusCaptureInput]);
 
   useEffect(() => {
     function selectEntryMode(event: KeyboardEvent) {
@@ -55,14 +89,15 @@ export function CaptureComposer({
         !event.ctrlKey &&
         event.key.toLowerCase() === "m";
       if (togglesMode) {
+        if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
         event.preventDefault();
-        onModeChange(mode === "planned" ? "did" : "planned");
+        switchEntryMode();
       }
     }
 
     globalThis.document.addEventListener("keydown", selectEntryMode);
     return () => globalThis.document.removeEventListener("keydown", selectEntryMode);
-  }, [mode, onModeChange]);
+  }, [switchEntryMode]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,7 +126,7 @@ export function CaptureComposer({
             aria-keyshortcuts="Meta+Shift+M"
             aria-label={`Entry type: ${mode}. Switch to ${mode === "planned" ? "did" : "planned"}`}
             className="entry-mode-switch"
-            onClick={() => onModeChange(mode === "planned" ? "did" : "planned")}
+            onClick={switchEntryMode}
             type="button"
           >
             <span aria-hidden="true">{mode === "planned" ? "Planned" : "Did"}</span>
@@ -106,6 +141,7 @@ export function CaptureComposer({
         </label>
         <input
           aria-describedby="capture-hint"
+          autoFocus
           autoComplete="off"
           id="capture-input"
           name="capture-entry"

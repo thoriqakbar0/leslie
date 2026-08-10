@@ -39,6 +39,7 @@ describe("CaptureComposer keyboard access", () => {
 
     expect(html).toContain('name="capture-entry"');
     expect(html).toContain('aria-describedby="capture-hint"');
+    expect(html).toContain('autofocus=""');
     expect(html).toContain("<kbd>⌘⇧M</kbd> switches entry type");
   });
 });
