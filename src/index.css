@@ -854,21 +854,22 @@ body:has(.notes-sidebar) {
   align-self: stretch;
   display: flex;
   align-items: center;
-  padding: 7px;
+  padding: 0;
   border-right: 1px solid var(--line);
 }
 
 .entry-mode-switch {
-  min-width: 104px;
-  height: 42px;
+  min-width: 121px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding-inline: 14px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--selected);
+  border: 0;
+  border-start-start-radius: 12px;
+  border-end-start-radius: 12px;
+  background: transparent;
   color: var(--accent);
   font-size: 14px;
   font-weight: 500;
@@ -879,8 +880,8 @@ body:has(.notes-sidebar) {
 }
 
 .entry-mode-switch:hover {
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
-  box-shadow: 0 2px 5px color-mix(in srgb, var(--shadow-popover) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .entry-mode-switch:active {
@@ -1048,6 +1049,9 @@ kbd {
   align-items: center;
   gap: 18px;
   border-bottom: 1px solid var(--line);
+  transition-property: background-color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
 }
 
 .activity-row:last-child {
@@ -1057,6 +1061,10 @@ kbd {
 .planned-row {
   grid-template-columns: 38px minmax(0, 1fr) auto;
   padding-block: 14px;
+}
+
+.planned-row:hover {
+  background: color-mix(in srgb, var(--accent) 2%, transparent);
 }
 
 .planned-row.is-current {
@@ -1084,14 +1092,18 @@ kbd {
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  transition:
-    border-color 140ms ease,
-    background 140ms ease;
+  transition-property: scale, border-color, background-color;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
 }
 
 .task-check:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.task-check:active {
+  scale: 0.96;
 }
 
 .activity-copy {
@@ -1185,6 +1197,9 @@ kbd {
   border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
 }
 
 .task-play svg {
@@ -1207,6 +1222,10 @@ kbd {
 .planned-row.is-playing .task-play {
   background: var(--accent);
   color: var(--on-accent);
+}
+
+.task-play:active {
+  scale: 0.96;
 }
 
 .activity-copy p {
@@ -1514,7 +1533,8 @@ input:focus-visible {
 
   .entry-mode-switch {
     width: 100%;
-    height: 34px;
+    height: 100%;
+    border-radius: 12px 12px 0 0;
   }
 
   .capture-box input {
