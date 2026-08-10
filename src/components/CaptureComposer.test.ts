@@ -28,7 +28,7 @@ describe("CaptureComposer keyboard access", () => {
     expect(switchIndex).toBeGreaterThan(-1);
     expect(switchIndex).toBeLessThan(inputIndex);
     expect(inputIndex).toBeLessThan(addIndex);
-    expect(html).toContain('aria-keyshortcuts="p d"');
+    expect(html).toContain('aria-keyshortcuts="Meta+Shift+M"');
     expect(html).toContain('aria-label="Entry type: did. Switch to planned"');
     expect(html).toContain(">Did</span>");
     expect(html).not.toContain(">Planned</span>");
@@ -39,6 +39,6 @@ describe("CaptureComposer keyboard access", () => {
 
     expect(html).toContain('name="capture-entry"');
     expect(html).toContain('aria-describedby="capture-hint"');
-    expect(html).toContain("<kbd>p</kbd>/<kbd>d</kbd> switches entry type");
+    expect(html).toContain("<kbd>⌘⇧M</kbd> switches entry type");
   });
 });

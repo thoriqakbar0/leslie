@@ -47,29 +47,22 @@ export function CaptureComposer({
 
   useEffect(() => {
     function selectEntryMode(event: KeyboardEvent) {
-      if (
-        event.defaultPrevented ||
-        event.isComposing ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.shiftKey
-      ) {
-        return;
+      if (event.defaultPrevented || event.isComposing) return;
+      const togglesMode =
+        event.metaKey &&
+        event.shiftKey &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        event.key.toLowerCase() === "m";
+      if (togglesMode) {
+        event.preventDefault();
+        onModeChange(mode === "planned" ? "did" : "planned");
       }
-      if (event.target instanceof Element && event.target.closest("input, textarea, select")) {
-        return;
-      }
-
-      const key = event.key.toLowerCase();
-      if (key !== "p" && key !== "d") return;
-      event.preventDefault();
-      onModeChange(key === "p" ? "planned" : "did");
     }
 
     globalThis.document.addEventListener("keydown", selectEntryMode);
     return () => globalThis.document.removeEventListener("keydown", selectEntryMode);
-  }, [onModeChange]);
+  }, [mode, onModeChange]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,7 +88,7 @@ export function CaptureComposer({
       <form className={`capture-box ${mode}`} onSubmit={submit}>
         <div className="capture-mode">
           <button
-            aria-keyshortcuts="p d"
+            aria-keyshortcuts="Meta+Shift+M"
             aria-label={`Entry type: ${mode}. Switch to ${mode === "planned" ? "did" : "planned"}`}
             className="entry-mode-switch"
             onClick={() => onModeChange(mode === "planned" ? "did" : "planned")}
@@ -163,8 +156,8 @@ export function CaptureComposer({
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>p</kbd>/<kbd>d</kbd> switches entry type <span aria-hidden="true">·</span>{" "}
-        <kbd>enter</kbd> adds it
+        <kbd>⌘⇧M</kbd> switches entry type <span aria-hidden="true">·</span> <kbd>enter</kbd> adds
+        it
         {mode === "planned" ? (
           <>
             {" "}
