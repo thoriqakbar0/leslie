@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import {
   completePlannedClock,
@@ -45,6 +45,32 @@ export function CaptureComposer({
     pendingSelection.current = null;
   }, [captureInputRef, text]);
 
+  useEffect(() => {
+    function selectEntryMode(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      ) {
+        return;
+      }
+      if (event.target instanceof Element && event.target.closest("input, textarea, select")) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key !== "p" && key !== "d") return;
+      event.preventDefault();
+      onModeChange(key === "p" ? "planned" : "did");
+    }
+
+    globalThis.document.addEventListener("keydown", selectEntryMode);
+    return () => globalThis.document.removeEventListener("keydown", selectEntryMode);
+  }, [onModeChange]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanText = text.trim();
@@ -67,22 +93,17 @@ export function CaptureComposer({
   return (
     <section className="capture-section" aria-label="Quick capture">
       <form className={`capture-box ${mode}`} onSubmit={submit}>
-        <div className="capture-mode" aria-label="Entry type" role="group">
+        <div className="capture-mode">
           <button
-            aria-pressed={mode === "did"}
-            className={mode === "did" ? "active" : ""}
-            onClick={() => onModeChange("did")}
+            aria-keyshortcuts="p d"
+            aria-label={`Entry type: ${mode}. Switch to ${mode === "planned" ? "did" : "planned"}`}
+            className={`entry-mode-switch ${mode}`}
+            onClick={() => onModeChange(mode === "planned" ? "did" : "planned")}
             type="button"
           >
-            Did
-          </button>
-          <button
-            aria-pressed={mode === "planned"}
-            className={mode === "planned" ? "active" : ""}
-            onClick={() => onModeChange("planned")}
-            type="button"
-          >
-            Planned
+            <span aria-hidden="true">Planned</span>
+            <span aria-hidden="true">Did</span>
+            <span aria-hidden="true" className="entry-mode-thumb" />
           </button>
         </div>
 
@@ -141,8 +162,8 @@ export function CaptureComposer({
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>tab</kbd> moves through controls <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
-        adds it
+        <kbd>p</kbd>/<kbd>d</kbd> switches entry type <span aria-hidden="true">·</span>{" "}
+        <kbd>enter</kbd> adds it
         {mode === "planned" ? (
           <>
             {" "}

@@ -19,18 +19,19 @@ function renderComposer() {
 }
 
 describe("CaptureComposer keyboard access", () => {
-  it("exposes both entry modes as pressed buttons in source order", () => {
+  it("exposes one entry-mode switch with both visible states", () => {
     const html = renderComposer();
-    const didIndex = html.indexOf(">Did</button>");
-    const plannedIndex = html.indexOf(">Planned</button>");
+    const switchIndex = html.indexOf('class="entry-mode-switch did"');
     const inputIndex = html.indexOf('id="capture-input"');
     const addIndex = html.indexOf(">Add</button>");
 
-    expect(didIndex).toBeLessThan(plannedIndex);
-    expect(plannedIndex).toBeLessThan(inputIndex);
+    expect(switchIndex).toBeGreaterThan(-1);
+    expect(switchIndex).toBeLessThan(inputIndex);
     expect(inputIndex).toBeLessThan(addIndex);
-    expect(html).toContain('aria-pressed="true"');
-    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain('aria-keyshortcuts="p d"');
+    expect(html).toContain('aria-label="Entry type: did. Switch to planned"');
+    expect(html).toContain(">Planned</span>");
+    expect(html).toContain(">Did</span>");
   });
 
   it("describes native keyboard traversal from the named input", () => {
@@ -38,7 +39,6 @@ describe("CaptureComposer keyboard access", () => {
 
     expect(html).toContain('name="capture-entry"');
     expect(html).toContain('aria-describedby="capture-hint"');
-    expect(html).toContain("tab</kbd> moves through controls");
-    expect(html).not.toContain("tab</kbd> switches Did/Planned");
+    expect(html).toContain("<kbd>p</kbd>/<kbd>d</kbd> switches entry type");
   });
 });
