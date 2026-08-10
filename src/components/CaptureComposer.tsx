@@ -97,13 +97,14 @@ export function CaptureComposer({
           <button
             aria-keyshortcuts="p d"
             aria-label={`Entry type: ${mode}. Switch to ${mode === "planned" ? "did" : "planned"}`}
-            className={`entry-mode-switch ${mode}`}
+            className="entry-mode-switch"
             onClick={() => onModeChange(mode === "planned" ? "did" : "planned")}
             type="button"
           >
-            <span aria-hidden="true">Planned</span>
-            <span aria-hidden="true">Did</span>
-            <span aria-hidden="true" className="entry-mode-thumb" />
+            <span aria-hidden="true">{mode === "planned" ? "Planned" : "Did"}</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20">
+              <path d="m6 7 2-2 2 2M8 5v8M14 13l-2 2-2-2M12 15V7" />
+            </svg>
           </button>
         </div>
 

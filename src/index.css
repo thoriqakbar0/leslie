@@ -836,44 +836,29 @@ body:has(.notes-sidebar) {
 }
 
 .entry-mode-switch {
-  position: relative;
-  width: 168px;
+  min-width: 104px;
   height: 42px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   align-items: center;
-  padding: 3px;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--muted);
+  border-radius: 6px;
+  background: var(--selected);
+  color: var(--accent);
   font-size: 14px;
   cursor: pointer;
 }
 
-.entry-mode-switch > span:not(.entry-mode-thumb) {
-  position: relative;
-  z-index: 1;
-}
-
-.entry-mode-switch.planned > span:first-child,
-.entry-mode-switch.did > span:nth-child(2) {
-  color: var(--accent);
-}
-
-.entry-mode-thumb {
-  position: absolute;
-  inset-block: 3px;
-  inset-inline-start: 3px;
-  width: calc(50% - 3px);
-  border-radius: 5px;
-  background: var(--selected);
-  box-shadow: 0 1px 3px var(--shadow-popover);
-  transition: transform 150ms ease;
-}
-
-.entry-mode-switch.did .entry-mode-thumb {
-  transform: translateX(100%);
+.entry-mode-switch svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
 }
 
 .capture-box input {

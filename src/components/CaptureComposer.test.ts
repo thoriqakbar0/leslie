@@ -19,9 +19,9 @@ function renderComposer() {
 }
 
 describe("CaptureComposer keyboard access", () => {
-  it("exposes one entry-mode switch with both visible states", () => {
+  it("exposes one button for switching the current entry mode", () => {
     const html = renderComposer();
-    const switchIndex = html.indexOf('class="entry-mode-switch did"');
+    const switchIndex = html.indexOf('class="entry-mode-switch"');
     const inputIndex = html.indexOf('id="capture-input"');
     const addIndex = html.indexOf(">Add</button>");
 
@@ -30,8 +30,8 @@ describe("CaptureComposer keyboard access", () => {
     expect(inputIndex).toBeLessThan(addIndex);
     expect(html).toContain('aria-keyshortcuts="p d"');
     expect(html).toContain('aria-label="Entry type: did. Switch to planned"');
-    expect(html).toContain(">Planned</span>");
     expect(html).toContain(">Did</span>");
+    expect(html).not.toContain(">Planned</span>");
   });
 
   it("describes native keyboard traversal from the named input", () => {
