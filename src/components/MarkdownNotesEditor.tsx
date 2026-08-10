@@ -45,6 +45,8 @@ interface PersistencePluginProps {
   readonly onMarkdownChange: (markdown: string) => void;
 }
 
+const MAX_CHECKLIST_DEPTH = 4;
+
 function ChecklistIndentPlugin() {
   const [editor] = useLexicalComposerContext();
 
@@ -63,7 +65,10 @@ function ChecklistIndentPlugin() {
           }
           const list = node.getParent();
           if (!$isListNode(list)) return false;
-          if (!event.shiftKey && (node.getPreviousSibling() === null || $getListDepth(list) >= 4)) {
+          if (
+            !event.shiftKey &&
+            (node.getPreviousSibling() === null || $getListDepth(list) >= MAX_CHECKLIST_DEPTH)
+          ) {
             return false;
           }
 

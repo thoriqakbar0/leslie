@@ -464,7 +464,8 @@ body:has(.notes-sidebar) {
 }
 
 .rich-checklist-nested-item {
-  padding-inline-start: 0;
+  /* Lexical uses a structural list item to hold each nested checklist. */
+  padding-inline-start: 28px;
 }
 
 .rich-checklist-nested-item::before,

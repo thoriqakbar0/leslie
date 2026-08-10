@@ -59,8 +59,13 @@ describe("Notes sidebar", () => {
     expect(roundTripMarkdown("- [] follow up")).toBe("- [ ] follow up");
   });
 
-  it("preserves nested checklist indentation in markdown", () => {
-    const markdown = "- [ ] parent\n    - [ ] child";
+  it("preserves four checklist indentation levels in markdown", () => {
+    const markdown = [
+      "- [ ] first",
+      "    - [ ] second",
+      "        - [ ] third",
+      "            - [ ] fourth",
+    ].join("\n");
 
     expect(roundTripMarkdown(markdown)).toBe(markdown);
   });
