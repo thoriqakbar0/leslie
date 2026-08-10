@@ -5,6 +5,7 @@ MODE="${1:-run}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNTIME_DIR="$ROOT_DIR/.leslie-runtime"
 PID_FILE="$RUNTIME_DIR/electron.pid"
+ELECTRON_PACKAGE_DIR="$ROOT_DIR/node_modules/electron"
 ELECTRON_TEMPLATE="$ROOT_DIR/node_modules/electron/dist/Electron.app"
 APP_BUNDLE="$RUNTIME_DIR/Leslie.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/Leslie"
@@ -37,13 +38,27 @@ stop_previous() {
 build_app() {
   cd "$ROOT_DIR"
 
+  if ! command -v nub >/dev/null 2>&1; then
+    echo "Nub is not installed. Install @nubjs/nub 0.7.5 first." >&2
+    exit 1
+  fi
+
   if [[ ! -x "$VP_BINARY" ]]; then
-    echo "Vite+ is not installed. Run vp install first." >&2
+    echo "Vite+ is not installed. Run nub install first." >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$ELECTRON_PACKAGE_DIR/install.js" ]]; then
+    echo "Electron is not installed. Run nub install first." >&2
     exit 1
   fi
 
   if [[ ! -d "$ELECTRON_TEMPLATE" ]]; then
-    echo "Electron is not installed. Run npm install first." >&2
+    env -u NODE_OPTIONS nub --node "$ELECTRON_PACKAGE_DIR/install.js"
+  fi
+
+  if [[ ! -d "$ELECTRON_TEMPLATE" ]]; then
+    echo "Electron failed to install its macOS runtime." >&2
     exit 1
   fi
 
@@ -52,7 +67,7 @@ build_app() {
     exit 1
   fi
 
-  "$VP_BINARY" run build
+  VITE_AGENTATION_ENABLED=true nub run build
 
   mkdir -p "$RUNTIME_DIR"
   rm -rf "$APP_BUNDLE"
@@ -70,6 +85,7 @@ build_app() {
   cp -R "$ROOT_DIR/assets" "$APP_RESOURCES/app/assets"
   cp "$ROOT_DIR/package.json" "$APP_RESOURCES/app/package.json"
   cp -R "$ROOT_DIR/electron" "$APP_RESOURCES/app/electron"
+  cp -R "$ROOT_DIR/shared" "$APP_RESOURCES/app/shared"
   cp -R "$ROOT_DIR/dist" "$APP_RESOURCES/app/dist"
   codesign --force --deep --sign - "$APP_BUNDLE" >/dev/null
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { CaptureComposer } from "./components/CaptureComposer";
+import { LiveClock } from "./components/LiveClock";
 import { Sidebar } from "./components/Sidebar";
 import {
   createInitialState,
@@ -14,6 +15,7 @@ import {
   timestampOnDate,
 } from "./model";
 import type {
+  EntryMode,
   EstimateMinutes,
   LeslieState,
   PlannedItem,
@@ -22,6 +24,8 @@ import type {
   WorkLogEntry,
 } from "./model";
 import { loadState, saveState } from "./storage";
+
+type ActivePage = "activity" | "settings";
 
 type RemovedItem =
   | { readonly kind: "task"; readonly task: PlannedItem }
@@ -45,8 +49,11 @@ function App() {
   const [document, setDocument] = useState<LeslieState | null>(null);
   const [timeScale, setTimeScale] = useState<TimeScale>("day");
   const [anchorTimestamp, setAnchorTimestamp] = useState(() => Date.now());
+  const [activePage, setActivePage] = useState<ActivePage>("activity");
+  const [entryMode, setEntryMode] = useState<EntryMode>("did");
   const [removedItem, setRemovedItem] = useState<RemovedItem | null>(null);
   const [storageFailed, setStorageFailed] = useState(false);
+  const captureInputRef = useRef<HTMLInputElement>(null);
   const skipNextSave = useRef(false);
   const saveQueue = useRef<Promise<void> | null>(null);
 
@@ -87,6 +94,26 @@ function App() {
     };
   }, [document]);
 
+  useEffect(() => {
+    function switchEntryMode(event: KeyboardEvent) {
+      if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey) return;
+
+      const target = event.target;
+      const isInsideLeslie =
+        target === globalThis.document.body ||
+        target === globalThis.document.documentElement ||
+        (target instanceof Element && target.closest(".leslie-app") !== null);
+      if (!isInsideLeslie) return;
+
+      event.preventDefault();
+      setEntryMode((current) => (current === "did" ? "planned" : "did"));
+      captureInputRef.current?.focus();
+    }
+
+    globalThis.document.addEventListener("keydown", switchEntryMode);
+    return () => globalThis.document.removeEventListener("keydown", switchEntryMode);
+  }, []);
+
   const visibleTasks = useMemo(
     () => document?.tasks.filter((task) => task.listId === document.activeListId) ?? [],
     [document],
@@ -106,6 +133,7 @@ function App() {
   }
 
   function selectList(activeListId: string) {
+    setActivePage("activity");
     setDocument((current) => (current ? { ...current, activeListId } : current));
   }
 
@@ -118,6 +146,21 @@ function App() {
       if (existing) return { ...current, activeListId: existing.id };
       const newList = { id: createId("list"), name };
       return { ...current, lists: [...current.lists, newList], activeListId: newList.id };
+    });
+  }
+
+  function renameList(id: string, name: string) {
+    setDocument((current) => {
+      if (!current) return current;
+      const duplicate = current.lists.some(
+        (list) =>
+          list.id !== id && list.name.localeCompare(name, undefined, { sensitivity: "base" }) === 0,
+      );
+      if (duplicate) return current;
+      return {
+        ...current,
+        lists: current.lists.map((list) => (list.id === id ? { ...list, name } : list)),
+      };
     });
   }
 
@@ -264,62 +307,88 @@ function App() {
   return (
     <main className="leslie-app">
       <Sidebar
-        activeListId={document.activeListId}
+        activeListId={activePage === "activity" ? document.activeListId : null}
+        isSettingsActive={activePage === "settings"}
         lists={document.lists}
         onAddList={addList}
         onDeleteList={deleteList}
+        onOpenSettings={() => setActivePage("settings")}
+        onRenameList={renameList}
         onSelectList={selectList}
       />
 
-      <div className="workspace">
-        <header className="page-header">
-          <label className="visually-hidden" htmlFor="time-scale">
-            Time scale
-          </label>
-          <select
-            className="time-scale"
-            id="time-scale"
-            onChange={(event) => {
-              const nextScale = parseTimeScale(event.target.value);
-              if (nextScale !== null) setTimeScale(nextScale);
-            }}
-            value={timeScale}
-          >
-            <option value="day">{timeScaleHeading("day")}</option>
-            <option value="week">{timeScaleHeading("week")}</option>
-            <option value="month">{timeScaleHeading("month")}</option>
-          </select>
-          <div className="date-navigation">
-            <button
-              aria-label={`Previous ${scaleLabel}`}
-              onClick={() => moveDate(-1)}
-              type="button"
-            >
-              <ScaleArrow direction="previous" />
-            </button>
-            <p aria-live="polite">{formatScaleDate(timeScale, new Date(anchorTimestamp))}</p>
-            <button aria-label={`Next ${scaleLabel}`} onClick={() => moveDate(1)} type="button">
-              <ScaleArrow direction="next" />
-            </button>
-          </div>
-        </header>
+      {activePage === "activity" ? (
+        <div className="workspace">
+          <header className="page-header">
+            <label className="visually-hidden" htmlFor="time-scale">
+              Time scale
+            </label>
+            <div className="time-heading">
+              <select
+                className="time-scale"
+                id="time-scale"
+                onChange={(event) => {
+                  const nextScale = parseTimeScale(event.target.value);
+                  if (nextScale !== null) setTimeScale(nextScale);
+                }}
+                value={timeScale}
+              >
+                <option value="day">{timeScaleHeading("day", new Date(anchorTimestamp))}</option>
+                <option value="week">{timeScaleHeading("week")}</option>
+                <option value="month">{timeScaleHeading("month")}</option>
+              </select>
+              <LiveClock />
+            </div>
+            <div className="date-navigation">
+              <button
+                aria-label={`Previous ${scaleLabel}`}
+                onClick={() => moveDate(-1)}
+                type="button"
+              >
+                <ScaleArrow direction="previous" />
+              </button>
+              <button
+                aria-label="Go to today"
+                className="current-date"
+                onClick={() => setAnchorTimestamp(Date.now())}
+                type="button"
+              >
+                <span aria-live="polite">
+                  {formatScaleDate(timeScale, new Date(anchorTimestamp))}
+                </span>
+              </button>
+              <button aria-label={`Next ${scaleLabel}`} onClick={() => moveDate(1)} type="button">
+                <ScaleArrow direction="next" />
+              </button>
+            </div>
+          </header>
 
-        <div className="stream">
-          <CaptureComposer onAddPlanned={addPlanned} onAddWorkLog={addWorkLog} />
-          <ActivityFeed
-            onComplete={completeTask}
-            onEstimateChange={changeEstimate}
-            onRemoveTask={removeTask}
-            onRemoveWorkLog={removeWorkLog}
-            activeListName={
-              document.lists.find((list) => list.id === document.activeListId)?.name ?? "This list"
-            }
-            tasks={visibleTasks}
-            timeScale={timeScale}
-            workLog={visibleWorkLog}
-          />
+          <div className="stream">
+            <CaptureComposer
+              captureInputRef={captureInputRef}
+              mode={entryMode}
+              onAddPlanned={addPlanned}
+              onAddWorkLog={addWorkLog}
+              onModeChange={setEntryMode}
+            />
+            <ActivityFeed
+              onComplete={completeTask}
+              onEstimateChange={changeEstimate}
+              onRemoveTask={removeTask}
+              onRemoveWorkLog={removeWorkLog}
+              activeListName={
+                document.lists.find((list) => list.id === document.activeListId)?.name ??
+                "This list"
+              }
+              tasks={visibleTasks}
+              timeScale={timeScale}
+              workLog={visibleWorkLog}
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <section aria-label="Settings" className="workspace settings-workspace" />
+      )}
 
       {removedItem ? (
         <div className="toast" role="status">

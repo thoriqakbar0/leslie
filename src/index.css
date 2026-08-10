@@ -60,6 +60,9 @@ button {
 
 .sidebar {
   min-width: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 38px 32px;
   border-right: 1px solid var(--line);
 }
@@ -86,7 +89,7 @@ button {
 .list-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  grid-template-columns: minmax(0, 1fr) auto;
   height: 72px;
   border-bottom: 1px solid var(--line);
 }
@@ -117,6 +120,12 @@ button {
   content: "";
 }
 
+.list-actions {
+  display: flex;
+  align-items: center;
+}
+
+.rename-list,
 .delete-list {
   width: 30px;
   height: 30px;
@@ -134,10 +143,42 @@ button {
   cursor: pointer;
 }
 
+.rename-list {
+  opacity: 0;
+  pointer-events: none;
+  font-size: 16px;
+  transition: opacity 120ms ease;
+}
+
+.list-row:hover .rename-list,
+.list-row:focus-within .rename-list {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rename-list:hover,
+.rename-list:focus-visible,
 .delete-list:hover,
 .delete-list:focus-visible {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
   color: var(--accent);
+}
+
+.list-edit {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+}
+
+.list-edit input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 17px;
 }
 
 .sidebar nav > .add-list {
@@ -185,9 +226,32 @@ button {
   cursor: pointer;
 }
 
+.sidebar-settings {
+  width: calc(100% + 44px);
+  min-height: 48px;
+  margin: auto -22px 0;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-settings:hover,
+.sidebar-settings.active {
+  background: var(--selected);
+  color: var(--accent);
+}
+
 .workspace {
   min-width: 0;
   padding: 44px clamp(34px, 6vw, 88px) 72px;
+}
+
+.settings-workspace {
+  min-height: 100vh;
 }
 
 .page-header,
@@ -200,17 +264,36 @@ button {
   margin-bottom: 38px;
 }
 
+.time-heading {
+  min-height: 92px;
+  display: flex;
+  align-items: baseline;
+  gap: 20.8125px;
+}
+
 .time-scale {
+  field-sizing: content;
   max-width: 100%;
   margin: 0;
-  padding: 0 46px 0 0;
+  padding: 0;
   border: 0;
   outline: 0;
+  appearance: none;
   background: transparent;
   color: var(--ink);
   font: 500 clamp(58px, 6vw, 82px)/0.96 var(--serif);
   letter-spacing: -0.04em;
   cursor: pointer;
+}
+
+.live-clock {
+  position: relative;
+  top: 20px;
+  flex: none;
+  color: var(--muted);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .date-navigation {
@@ -222,11 +305,19 @@ button {
   margin-top: 11px;
 }
 
-.date-navigation p {
+.date-navigation .current-date {
+  width: auto;
   min-width: 0;
+  height: auto;
+  display: block;
   margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   color: var(--muted);
   font-size: 16px;
+  cursor: pointer;
 }
 
 .date-navigation button {
@@ -578,6 +669,8 @@ input:focus-visible {
   }
 
   .sidebar {
+    min-height: 0;
+    display: block;
     padding: 22px 28px 0;
     border-right: 0;
     border-bottom: 1px solid var(--line);
@@ -594,11 +687,18 @@ input:focus-visible {
     overflow-x: auto;
   }
 
+  .sidebar-settings {
+    width: auto;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+  }
+
   .list-row {
     flex: 0 0 auto;
     height: 44px;
     border: 0;
-    grid-template-columns: auto 26px;
+    grid-template-columns: auto auto;
   }
 
   .list-select {
@@ -625,6 +725,13 @@ input:focus-visible {
     font-size: 17px;
   }
 
+  .rename-list {
+    width: 26px;
+    height: 26px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .new-list {
     flex: 0 0 140px;
     height: 44px;
@@ -642,6 +749,14 @@ input:focus-visible {
 
   .time-scale {
     font-size: 60px;
+  }
+
+  .time-heading {
+    min-height: 84px;
+  }
+
+  .live-clock {
+    font-size: 18px;
   }
 }
 

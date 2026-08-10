@@ -1,9 +1,14 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createLeslieDatabase } from "./sqlite-storage.mjs";
+import storageChannels from "./storage-channels.cjs";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const appIconPath = path.join(currentDirectory, "../assets/brand/leslie-app-icon.png");
+const preloadPath = path.join(currentDirectory, "preload.cjs");
+let localDatabase = null;
+let databaseOpenFailed = false;
 
 function parseRendererUrl(value) {
   if (!value) return null;
@@ -28,6 +33,7 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: preloadPath,
       sandbox: true,
     },
   });
@@ -44,6 +50,37 @@ async function createWindow() {
   await window.loadFile(path.join(currentDirectory, "../dist/index.html"));
 }
 
+function storageFailure(operation) {
+  return { ok: false, error: { operation } };
+}
+
+function registerStorageHandlers() {
+  try {
+    localDatabase = createLeslieDatabase(path.join(app.getPath("userData"), "leslie.sqlite3"));
+  } catch {
+    databaseOpenFailed = true;
+  }
+
+  ipcMain.handle(storageChannels.load, () => {
+    if (databaseOpenFailed || localDatabase === null) return storageFailure("open");
+    try {
+      return { ok: true, value: localDatabase.loadState() };
+    } catch {
+      return storageFailure("read");
+    }
+  });
+
+  ipcMain.handle(storageChannels.save, (_event, state) => {
+    if (databaseOpenFailed || localDatabase === null) return storageFailure("open");
+    try {
+      localDatabase.saveState(state);
+      return { ok: true, value: null };
+    } catch {
+      return storageFailure("write");
+    }
+  });
+}
+
 function failStartup(cause) {
   console.error("Leslie failed to start", cause);
   app.quit();
@@ -56,6 +93,7 @@ app
   .whenReady()
   .then(async () => {
     if (process.platform === "darwin") app.dock.setIcon(appIconPath);
+    registerStorageHandlers();
     await createWindow();
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -64,6 +102,11 @@ app
     });
   })
   .catch(failStartup);
+
+app.on("before-quit", () => {
+  localDatabase?.close();
+  localDatabase = null;
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

@@ -4,10 +4,14 @@ import { describe, expect, it } from "vite-plus/test";
 import { CaptureComposer } from "./CaptureComposer";
 
 function renderComposer() {
+  const captureInputRef = { current: null };
   return renderToStaticMarkup(
     createElement(CaptureComposer, {
+      captureInputRef,
+      mode: "did",
       onAddPlanned: () => undefined,
       onAddWorkLog: () => undefined,
+      onModeChange: () => undefined,
     }),
   );
 }
@@ -27,11 +31,11 @@ describe("CaptureComposer keyboard access", () => {
     expect(html).toContain('aria-pressed="false"');
   });
 
-  it("describes normal tab movement from the named input", () => {
+  it("describes the entry-mode shortcut from the named input", () => {
     const html = renderComposer();
 
     expect(html).toContain('name="capture-entry"');
     expect(html).toContain('aria-describedby="capture-hint"');
-    expect(html).toContain("tab</kbd> moves through controls");
+    expect(html).toContain("tab</kbd> switches Did/Planned");
   });
 });

@@ -1,15 +1,15 @@
-import { createInitialState, parseEstimate } from "./model";
-import type { LeslieState, PlannedItem, TaskList, WorkLogEntry } from "./model";
+import { parseLeslieState } from "../shared/leslie-state.mjs";
+import { createInitialState } from "./model";
+import type { LeslieState } from "./model";
 
-const DATABASE_NAME = "leslie";
-const DATABASE_VERSION = 1;
-const DOCUMENT_STORE = "documents";
-const PRIMARY_DOCUMENT_KEY = "primary";
+const LEGACY_DATABASE_NAME = "leslie";
+const LEGACY_DOCUMENT_STORE = "documents";
+const LEGACY_PRIMARY_DOCUMENT_KEY = "primary";
 
 /** The local database operation that failed. */
 export type LocalDatabaseOperation = "open" | "read" | "write";
 
-/** A safe failure value for a local IndexedDB operation. */
+/** A safe failure value for a local SQLite operation. */
 export class LocalDatabaseError extends Error {
   readonly _tag = "LocalDatabaseError";
   readonly operation: LocalDatabaseOperation;
@@ -31,92 +31,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function parseList(value: unknown): TaskList | null {
-  if (!isRecord(value) || typeof value.id !== "string" || typeof value.name !== "string") {
-    return null;
-  }
-  const name = value.name.trim();
-  if (!value.id || !name) return null;
-  return { id: value.id, name };
+function failureOperation(
+  value: unknown,
+  fallback: LocalDatabaseOperation,
+): LocalDatabaseOperation {
+  if (!isRecord(value) || !isRecord(value.error)) return fallback;
+  const operation = value.error.operation;
+  return operation === "open" || operation === "read" || operation === "write"
+    ? operation
+    : fallback;
 }
 
-function parseTask(value: unknown, listIds: ReadonlySet<string>): PlannedItem | null {
-  if (!isRecord(value)) return null;
-  if (
-    typeof value.id !== "string" ||
-    typeof value.listId !== "string" ||
-    !listIds.has(value.listId) ||
-    typeof value.title !== "string" ||
-    typeof value.createdAt !== "number" ||
-    !Number.isFinite(value.createdAt)
-  ) {
-    return null;
-  }
-  const estimatedMinutes = parseEstimate(String(value.estimatedMinutes));
-  const title = value.title.trim();
-  if (!value.id || !title || estimatedMinutes === null) return null;
-  return {
-    id: value.id,
-    listId: value.listId,
-    title,
-    estimatedMinutes,
-    createdAt: value.createdAt,
-  };
-}
-
-function parseWorkLogEntry(value: unknown): WorkLogEntry | null {
-  if (!isRecord(value)) return null;
-  if (
-    typeof value.id !== "string" ||
-    typeof value.note !== "string" ||
-    typeof value.createdAt !== "number" ||
-    !Number.isFinite(value.createdAt)
-  ) {
-    return null;
-  }
-  const note = value.note.trim();
-  if (!value.id || !note) return null;
-  return { id: value.id, note, createdAt: value.createdAt };
-}
-
-function parseState(value: unknown): LeslieState | null {
-  if (
-    !isRecord(value) ||
-    !Array.isArray(value.lists) ||
-    !Array.isArray(value.tasks) ||
-    !Array.isArray(value.workLog)
-  ) {
-    return null;
-  }
-
-  const lists = value.lists.map(parseList).filter((list): list is TaskList => list !== null);
-  if (lists.length === 0) return null;
-  const listIds = new Set(lists.map((list) => list.id));
-  if (typeof value.activeListId !== "string" || !listIds.has(value.activeListId)) return null;
-
-  const tasks = value.tasks
-    .map((task) => parseTask(task, listIds))
-    .filter((task): task is PlannedItem => task !== null);
-  const workLog = value.workLog
-    .map(parseWorkLogEntry)
-    .filter((entry): entry is WorkLogEntry => entry !== null);
-
-  return { lists, activeListId: value.activeListId, tasks, workLog };
-}
-
-function openDatabase(): Promise<IDBDatabase> {
+function openLegacyDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
-
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains(DOCUMENT_STORE)) {
-        database.createObjectStore(DOCUMENT_STORE);
-      }
-    };
+    const request = window.indexedDB.open(LEGACY_DATABASE_NAME);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("IndexedDB open failed"));
-    request.onblocked = () => reject(new Error("IndexedDB upgrade was blocked"));
+    request.onblocked = () => reject(new Error("IndexedDB open was blocked"));
   });
 }
 
@@ -137,52 +68,82 @@ function waitForTransaction(transaction: IDBTransaction): Promise<void> {
   });
 }
 
-/** Load and parse the document from Leslie's local-only IndexedDB database. */
-export async function loadState(): Promise<StorageResult<LeslieState>> {
-  let database: IDBDatabase | null = null;
-  try {
-    database = await openDatabase();
-    const transaction = database.transaction(DOCUMENT_STORE, "readonly");
-    const completion = waitForTransaction(transaction);
-    const request: IDBRequest<unknown> = transaction
-      .objectStore(DOCUMENT_STORE)
-      .get(PRIMARY_DOCUMENT_KEY);
-    const stored = await requestValue(request);
-    await completion;
+async function loadLegacyState(): Promise<LeslieState | null> {
+  const databases = await window.indexedDB.databases();
+  if (!databases.some((database) => database.name === LEGACY_DATABASE_NAME)) return null;
 
-    if (stored === undefined) return { ok: true, value: createInitialState() };
-    const parsed = parseState(stored);
+  const database = await openLegacyDatabase();
+  try {
+    if (!database.objectStoreNames.contains(LEGACY_DOCUMENT_STORE)) return null;
+    const transaction = database.transaction(LEGACY_DOCUMENT_STORE, "readonly");
+    const completion = waitForTransaction(transaction);
+    const stored = await requestValue(
+      transaction.objectStore(LEGACY_DOCUMENT_STORE).get(LEGACY_PRIMARY_DOCUMENT_KEY),
+    );
+    await completion;
+    if (stored === undefined) return null;
+    const parsed = parseLeslieState(stored);
+    if (parsed === null) throw new Error("Stored IndexedDB state is invalid");
+    return parsed;
+  } finally {
+    database.close();
+  }
+}
+
+async function loadSqliteState(): Promise<StorageResult<LeslieState | null>> {
+  try {
+    const response: unknown = await window.leslieStorage.load();
+    if (!isRecord(response) || response.ok !== true) {
+      return {
+        ok: false,
+        error: new LocalDatabaseError(failureOperation(response, "read")),
+      };
+    }
+    if (response.value === null) return { ok: true, value: null };
+    const parsed = parseLeslieState(response.value);
     if (parsed === null) {
       return {
         ok: false,
         error: new LocalDatabaseError("read", {
-          cause: new Error("Stored document schema is invalid"),
+          cause: new Error("Stored SQLite state is invalid"),
         }),
       };
     }
     return { ok: true, value: parsed };
   } catch (cause: unknown) {
-    const operation: LocalDatabaseOperation = database === null ? "open" : "read";
-    return { ok: false, error: new LocalDatabaseError(operation, { cause }) };
-  } finally {
-    database?.close();
+    return { ok: false, error: new LocalDatabaseError("read", { cause }) };
   }
 }
 
-/** Save the document to Leslie's local-only IndexedDB database. */
-export async function saveState(state: LeslieState): Promise<StorageResult<void>> {
-  let database: IDBDatabase | null = null;
+/** Load Leslie's state from SQLite, importing the former IndexedDB document once when needed. */
+export async function loadState(): Promise<StorageResult<LeslieState>> {
+  const loaded = await loadSqliteState();
+  if (!loaded.ok) return loaded;
+  if (loaded.value !== null) return { ok: true, value: loaded.value };
+
+  let state: LeslieState;
   try {
-    database = await openDatabase();
-    const transaction = database.transaction(DOCUMENT_STORE, "readwrite");
-    const completion = waitForTransaction(transaction);
-    transaction.objectStore(DOCUMENT_STORE).put(state, PRIMARY_DOCUMENT_KEY);
-    await completion;
+    state = (await loadLegacyState()) ?? createInitialState();
+  } catch (cause: unknown) {
+    return { ok: false, error: new LocalDatabaseError("read", { cause }) };
+  }
+
+  const saved = await saveState(state);
+  return saved.ok ? { ok: true, value: state } : saved;
+}
+
+/** Save Leslie's complete state through the validated main-process SQLite transaction. */
+export async function saveState(state: LeslieState): Promise<StorageResult<void>> {
+  try {
+    const response: unknown = await window.leslieStorage.save(state);
+    if (!isRecord(response) || response.ok !== true) {
+      return {
+        ok: false,
+        error: new LocalDatabaseError(failureOperation(response, "write")),
+      };
+    }
     return { ok: true, value: undefined };
   } catch (cause: unknown) {
-    const operation: LocalDatabaseOperation = database === null ? "open" : "write";
-    return { ok: false, error: new LocalDatabaseError(operation, { cause }) };
-  } finally {
-    database?.close();
+    return { ok: false, error: new LocalDatabaseError("write", { cause }) };
   }
 }

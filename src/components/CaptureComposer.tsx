@@ -1,18 +1,40 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { ESTIMATE_OPTIONS, formatDuration, parseEstimate, parsePlannedInput } from "../model";
+import { useLayoutEffect, useRef, useState } from "react";
+import type { FormEvent, RefObject } from "react";
+import {
+  completePlannedClock,
+  ESTIMATE_OPTIONS,
+  formatDuration,
+  parseEstimate,
+  parsePlannedInput,
+} from "../model";
 import type { EntryMode, EstimateMinutes } from "../model";
 
 interface CaptureComposerProps {
+  readonly captureInputRef: RefObject<HTMLInputElement | null>;
+  readonly mode: EntryMode;
   readonly onAddPlanned: (title: string, estimatedMinutes: EstimateMinutes) => void;
   readonly onAddWorkLog: (note: string) => void;
+  readonly onModeChange: (mode: EntryMode) => void;
 }
 
 /** Render one keyboard-first composer for planned work and completed work. */
-export function CaptureComposer({ onAddPlanned, onAddWorkLog }: CaptureComposerProps) {
-  const [mode, setMode] = useState<EntryMode>("did");
+export function CaptureComposer({
+  captureInputRef,
+  mode,
+  onAddPlanned,
+  onAddWorkLog,
+  onModeChange,
+}: CaptureComposerProps) {
   const [text, setText] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState<EstimateMinutes>(30);
+  const pendingSelection = useRef<{ readonly start: number; readonly end: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const selection = pendingSelection.current;
+    if (selection === null) return;
+    captureInputRef.current?.setSelectionRange(selection.start, selection.end);
+    pendingSelection.current = null;
+  }, [captureInputRef, text]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +57,8 @@ export function CaptureComposer({ onAddPlanned, onAddWorkLog }: CaptureComposerP
           <button
             aria-pressed={mode === "did"}
             className={mode === "did" ? "active" : ""}
-            onClick={() => setMode("did")}
+            onClick={() => onModeChange("did")}
+            onFocus={() => onModeChange("did")}
             type="button"
           >
             Did
@@ -43,7 +66,8 @@ export function CaptureComposer({ onAddPlanned, onAddWorkLog }: CaptureComposerP
           <button
             aria-pressed={mode === "planned"}
             className={mode === "planned" ? "active" : ""}
-            onClick={() => setMode("planned")}
+            onClick={() => onModeChange("planned")}
+            onFocus={() => onModeChange("planned")}
             type="button"
           >
             Planned
@@ -60,14 +84,20 @@ export function CaptureComposer({ onAddPlanned, onAddWorkLog }: CaptureComposerP
           name="capture-entry"
           onChange={(event) => {
             const nextText = event.target.value;
-            setText(nextText);
+            const completion = mode === "planned" ? completePlannedClock(nextText) : null;
+            const completedText = completion?.value ?? nextText;
+            pendingSelection.current = completion
+              ? { start: completion.selectionStart, end: completion.selectionEnd }
+              : null;
+            setText(completedText);
             if (mode === "planned") {
-              setEstimatedMinutes(parsePlannedInput(nextText, estimatedMinutes).estimatedMinutes);
+              setEstimatedMinutes(
+                parsePlannedInput(completedText, estimatedMinutes).estimatedMinutes,
+              );
             }
           }}
-          placeholder={
-            mode === "did" ? "e.g. Reviewed the invoice…" : "e.g. Send invoice in 30 min…"
-          }
+          placeholder={mode === "did" ? "e.g. Reviewed the invoice…" : "e.g. Call at 8:30…"}
+          ref={captureInputRef}
           type="text"
           value={text}
         />
@@ -99,8 +129,14 @@ export function CaptureComposer({ onAddPlanned, onAddWorkLog }: CaptureComposerP
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>tab</kbd> moves through controls <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
-        adds it
+        <kbd>tab</kbd> switches Did/Planned <span aria-hidden="true">·</span> <kbd>enter</kbd> adds
+        it
+        {mode === "planned" ? (
+          <>
+            {" "}
+            <span aria-hidden="true">·</span> type <kbd>8:</kbd> to complete <kbd>08:00</kbd>
+          </>
+        ) : null}
       </p>
     </section>
   );

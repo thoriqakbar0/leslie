@@ -5,17 +5,19 @@
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
-    "dev": "concurrently -k \"vp dev --host 127.0.0.1 --port 5175 --strictPort\" \"wait-on http-get://127.0.0.1:5175 && LESLIE_RENDERER_URL=http://127.0.0.1:5175 electron electron/main.mjs\"",
+    "dev": "concurrently -k \"vp dev --host 127.0.0.1 --port 5175 --strictPort\" \"wait-on http-get://127.0.0.1:5175 && LESLIE_RENDERER_URL=http://127.0.0.1:5175 env -u NODE_OPTIONS electron electron/main.mjs\"",
     "dev:web": "vp dev",
     "build": "tsc -b && vp build",
     "check": "vp check",
+    "format": "vp fmt",
     "lint": "vp lint",
     "preview": "vp preview",
-    "start": "electron electron/main.mjs"
+    "start": "env -u NODE_OPTIONS electron electron/main.mjs",
+    "test": "vp test --run"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "agentation": "^3.0.2",
+    "agentation": "file:vendor/agentation-3.0.2.tgz",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"
@@ -37,9 +39,10 @@
   },
   "devEngines": {
     "packageManager": {
-      "name": "npm",
-      "version": "12.0.2",
-      "onFail": "download"
+      "name": "nub",
+      "version": "^0.7.5",
+      "onFail": "ignore"
     }
-  }
+  },
+  "packageManager": "nub@0.7.5"
 }

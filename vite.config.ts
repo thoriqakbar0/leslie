@@ -33,7 +33,7 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "electron/**/*.test.mjs"],
   },
   plugins: lazyPlugins(() => [react(), tailwindcss()]),
 });

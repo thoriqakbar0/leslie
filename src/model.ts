@@ -47,9 +47,16 @@ const initialLists: readonly TaskList[] = [
   { id: "someday", name: "Someday" },
 ];
 
-const entryTimeFormatter = new Intl.DateTimeFormat(undefined, {
+const entryTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
+  hourCycle: "h23",
+});
+const clockTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
 });
 const dayFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: "long",
@@ -170,18 +177,54 @@ export function parseTimeScale(value: string): TimeScale | null {
   return null;
 }
 
+/** Complete a trailing clock-hour prefix and select its minutes for direct replacement. */
+export function completePlannedClock(value: string): {
+  readonly value: string;
+  readonly selectionStart: number;
+  readonly selectionEnd: number;
+} | null {
+  const clockPrefix = value.match(/(?:^|\s)([01]?\d|2[0-3]):$/);
+  if (!clockPrefix) return null;
+
+  const hour = clockPrefix[1];
+  if (hour === undefined) return null;
+  const hourStart = value.length - hour.length - 1;
+  const completedValue = `${value.slice(0, hourStart)}${hour.padStart(2, "0")}:00`;
+  const selectionStart = hourStart + 3;
+  return {
+    value: completedValue,
+    selectionStart,
+    selectionEnd: selectionStart + 2,
+  };
+}
+
 /** Extract a supported duration from the end of natural-language task text. */
 export function parsePlannedInput(
   value: string,
   fallbackMinutes: EstimateMinutes,
 ): { readonly title: string; readonly estimatedMinutes: EstimateMinutes } {
-  const duration = value.match(
-    /\s+(?:(?:for|in|about)\s+)?(15|30|60|1|2|4|8)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours)\s*$/i,
-  );
+  const halfHour = value.match(/\s+(?:(?:for|in)\s+)?(?:about\s+)?half(?:\s+an?)?\s+hour\s*$/i);
   const cleanValue = value.trim();
+  if (halfHour) {
+    const title = value.slice(0, halfHour.index).trim();
+    return { title: title || cleanValue, estimatedMinutes: 30 };
+  }
+
+  const duration = value.match(
+    /\s+(?:(?:for|in)\s+)?(?:about\s+)?(15|30|60|1|2|4|8|an?|one|two|four|eight)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours)\s*$/i,
+  );
   if (!duration) return { title: cleanValue, estimatedMinutes: fallbackMinutes };
 
-  const amount = Number(duration[1]);
+  const amountText = duration[1]?.toLowerCase() ?? "";
+  const wordAmounts: Readonly<Record<string, number>> = {
+    a: 1,
+    an: 1,
+    one: 1,
+    two: 2,
+    four: 4,
+    eight: 8,
+  };
+  const amount = wordAmounts[amountText] ?? Number(amountText);
   const unit = duration[2]?.toLowerCase() ?? "";
   const parsedMinutes = parseEstimate(String(unit.startsWith("h") ? amount * 60 : amount));
   if (parsedMinutes === null) return { title: cleanValue, estimatedMinutes: fallbackMinutes };
@@ -200,6 +243,11 @@ export function formatDuration(minutes: EstimateMinutes): string {
 /** Format a work-log timestamp as a compact local time. */
 export function formatEntryTime(timestamp: number): string {
   return entryTimeFormatter.format(new Date(timestamp));
+}
+
+/** Format a local clock value with seconds in 24-hour time. */
+export function formatClockTime(value: Date): string {
+  return clockTimeFormatter.format(value);
 }
 
 /** Format the date line for the selected activity range. */
@@ -284,8 +332,26 @@ export function moveScaleDate(value: Date, scale: TimeScale, direction: -1 | 1):
 }
 
 /** Return the visible heading for an activity range. */
-export function timeScaleHeading(scale: TimeScale): string {
-  if (scale === "day") return "Today";
+export function timeScaleHeading(
+  scale: TimeScale,
+  anchor = new Date(),
+  today = new Date(),
+): string {
+  if (scale === "day") {
+    const calendarDay = (value: Date) =>
+      Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()) / 86_400_000;
+    const dayOffset = calendarDay(anchor) - calendarDay(today);
+    if (dayOffset === 0) return "Today";
+    if (dayOffset === 1) return "Tomorrow";
+    if (dayOffset === -1) return "Yesterday";
+
+    const weekday = new Intl.DateTimeFormat("en", { weekday: "long" }).format(anchor);
+    const weekStart = (value: Date) => calendarDay(value) - ((value.getDay() || 7) - 1);
+    const weekOffset = (weekStart(anchor) - weekStart(today)) / 7;
+    if (weekOffset === 1) return `Next ${weekday}`;
+    if (weekOffset === -1) return `Last ${weekday}`;
+    return weekday;
+  }
   if (scale === "week") return "This week";
   return "This month";
 }

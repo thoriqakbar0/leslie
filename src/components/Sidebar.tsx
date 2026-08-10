@@ -4,22 +4,30 @@ import leslieMarkUrl from "../assets/leslie-mark.png";
 import type { TaskList } from "../model";
 
 interface SidebarProps {
-  readonly activeListId: string;
+  readonly activeListId: string | null;
+  readonly isSettingsActive: boolean;
   readonly lists: readonly TaskList[];
   readonly onAddList: (name: string) => void;
   readonly onDeleteList: (id: string) => void;
+  readonly onOpenSettings: () => void;
+  readonly onRenameList: (id: string, name: string) => void;
   readonly onSelectList: (id: string) => void;
 }
 
 /** Render Leslie's list switcher and inline list creator. */
 export function Sidebar({
   activeListId,
+  isSettingsActive,
   lists,
   onAddList,
   onDeleteList,
+  onOpenSettings,
+  onRenameList,
   onSelectList,
 }: SidebarProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const [editingListName, setEditingListName] = useState("");
   const [newListName, setNewListName] = useState("");
 
   function submitNewList(event: FormEvent<HTMLFormElement>) {
@@ -29,6 +37,19 @@ export function Sidebar({
     onAddList(name);
     setNewListName("");
     setIsAdding(false);
+  }
+
+  function startEditing(list: TaskList) {
+    setEditingListId(list.id);
+    setEditingListName(list.name);
+  }
+
+  function saveEdit() {
+    if (editingListId === null) return;
+    const name = editingListName.trim();
+    if (name) onRenameList(editingListId, name);
+    setEditingListId(null);
+    setEditingListName("");
   }
 
   return (
@@ -42,24 +63,64 @@ export function Sidebar({
           const isActive = activeListId === list.id;
           return (
             <div className={`list-row ${isActive ? "active" : ""}`} key={list.id}>
-              <button
-                aria-current={isActive ? "page" : undefined}
-                className="list-select"
-                onClick={() => onSelectList(list.id)}
-                type="button"
-              >
-                {list.name}
-              </button>
-              {isActive && lists.length > 1 ? (
-                <button
-                  aria-label={`Delete ${list.name}`}
-                  className="delete-list"
-                  onClick={() => onDeleteList(list.id)}
-                  type="button"
+              {editingListId === list.id ? (
+                <form
+                  className="list-edit"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    saveEdit();
+                  }}
                 >
-                  <span aria-hidden="true">×</span>
-                </button>
-              ) : null}
+                  <label className="visually-hidden" htmlFor={`list-name-${list.id}`}>
+                    List name
+                  </label>
+                  <input
+                    autoFocus
+                    id={`list-name-${list.id}`}
+                    onBlur={saveEdit}
+                    onChange={(event) => setEditingListName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Escape") return;
+                      event.preventDefault();
+                      setEditingListId(null);
+                      setEditingListName("");
+                    }}
+                    value={editingListName}
+                  />
+                </form>
+              ) : (
+                <>
+                  <button
+                    aria-current={isActive ? "page" : undefined}
+                    className="list-select"
+                    onClick={() => onSelectList(list.id)}
+                    onDoubleClick={() => startEditing(list)}
+                    type="button"
+                  >
+                    {list.name}
+                  </button>
+                  <div className="list-actions">
+                    <button
+                      aria-label={`Rename ${list.name}`}
+                      className="rename-list"
+                      onClick={() => startEditing(list)}
+                      type="button"
+                    >
+                      <span aria-hidden="true">✎</span>
+                    </button>
+                    {isActive && lists.length > 1 ? (
+                      <button
+                        aria-label={`Delete ${list.name}`}
+                        className="delete-list"
+                        onClick={() => onDeleteList(list.id)}
+                        type="button"
+                      >
+                        <span aria-hidden="true">×</span>
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
@@ -90,6 +151,14 @@ export function Sidebar({
           </button>
         )}
       </nav>
+      <button
+        aria-current={isSettingsActive ? "page" : undefined}
+        className={`sidebar-settings ${isSettingsActive ? "active" : ""}`}
+        onClick={onOpenSettings}
+        type="button"
+      >
+        Settings
+      </button>
     </aside>
   );
 }
