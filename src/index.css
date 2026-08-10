@@ -1,19 +1,51 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   font-family: "Avenir Next", Avenir, system-ui, sans-serif;
-  color: #07162d;
-  background: #fbf9f4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --paper: #fbf9f4;
-  --ink: #07162d;
-  --muted: #596579;
-  --faint: #a29b90;
-  --line: #ded7ca;
-  --accent: #cf5428;
-  --selected: #efe9df;
+  --paper: oklch(0.982 0.007 88.642);
+  --ink: oklch(0.202 0.051 258.426);
+  --muted: oklch(0.504 0.035 260.619);
+  --faint: oklch(0.545 0.014 75.273);
+  --line: oklch(0.881 0.019 83.063);
+  --accent: oklch(0.54 0.162 37.967);
+  --selected: oklch(0.936 0.015 80.706);
+  --on-accent: oklch(0.987 0.008 67.727);
+  --control-border: oklch(0.579 0.017 76.987);
+  --capture-surface: color-mix(in srgb, oklch(1 0 0) 22%, transparent);
+  --notice-surface: oklch(0.202 0.051 258.426);
+  --notice-text: oklch(0.987 0.008 67.727);
+  --notice-action: oklch(0.738 0.137 40.6);
+  --shadow-panel: oklch(0.202 0.051 258.426 / 0.18);
+  --shadow-popover: oklch(0.202 0.051 258.426 / 0.2);
+  --shadow-notice: oklch(0.202 0.051 258.426 / 0.24);
   --serif: "Iowan Old Style", Baskerville, Georgia, serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: oklch(0.206 0.022 251.814);
+    --ink: oklch(0.954 0.015 80.707);
+    --muted: oklch(0.861 0.016 257.203);
+    --faint: oklch(0.778 0.022 252.537);
+    --line: oklch(0.37 0.029 252.51);
+    --accent: oklch(0.805 0.117 43.262);
+    --selected: oklch(0.281 0.018 59.814);
+    --on-accent: oklch(0.206 0.032 39.172);
+    --control-border: oklch(0.663 0.026 256.142);
+    --capture-surface: oklch(0.231 0.023 251.483);
+    --notice-surface: oklch(0.281 0.026 253.282);
+    --notice-text: oklch(0.954 0.015 80.707);
+    --notice-action: oklch(0.805 0.117 43.262);
+    --shadow-panel: oklch(0 0 0 / 0.18);
+    --shadow-popover: oklch(0 0 0 / 0.2);
+    --shadow-notice: oklch(0 0 0 / 0.24);
+  }
 }
 
 * {
@@ -66,8 +98,8 @@ button {
   left: 12px;
   padding: 10px 14px;
   border-radius: 6px;
-  background: var(--ink);
-  color: white;
+  background: var(--notice-surface);
+  color: var(--notice-text);
   font-size: 14px;
   text-decoration: none;
   transform: translateY(calc(-100% - 20px));
@@ -260,7 +292,7 @@ body:has(.notes-sidebar) {
   grid-template-rows: auto minmax(0, 1fr);
   border-left: 1px solid var(--line);
   background: var(--paper);
-  box-shadow: -18px 0 54px rgb(7 22 45 / 9%);
+  box-shadow: -18px 0 54px var(--shadow-panel);
 }
 
 .notes-sidebar-header {
@@ -503,7 +535,7 @@ body:has(.notes-sidebar) {
   height: 52px;
   grid-row: 1 / -1;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 
 .playback-toggle svg {
@@ -658,7 +690,7 @@ body:has(.notes-sidebar) {
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--paper);
-  box-shadow: 0 16px 42px rgb(7 22 45 / 12%);
+  box-shadow: 0 16px 42px var(--shadow-popover);
 }
 
 .date-picker-header {
@@ -742,7 +774,7 @@ body:has(.notes-sidebar) {
 
 .date-picker-grid button[aria-current="date"] {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 
 .date-picker-today {
@@ -766,7 +798,7 @@ body:has(.notes-sidebar) {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: color-mix(in srgb, white 22%, transparent);
+  background: var(--capture-surface);
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
@@ -963,7 +995,7 @@ kbd {
   width: 34px;
   height: 34px;
   padding: 0;
-  border: 1.4px solid #80796f;
+  border: 1.4px solid var(--control-border);
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
@@ -1083,7 +1115,7 @@ kbd {
 .task-play:focus-visible,
 .planned-row.is-current .task-play {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 
 .activity-copy p {
@@ -1157,10 +1189,10 @@ kbd {
   margin: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--ink);
-  color: white;
+  background: var(--notice-surface);
+  color: var(--notice-text);
   font-size: 14px;
-  box-shadow: 0 12px 36px rgb(7 22 45 / 16%);
+  box-shadow: 0 12px 36px var(--shadow-notice);
 }
 
 .toast {
@@ -1173,7 +1205,7 @@ kbd {
 .toast button {
   border: 0;
   background: transparent;
-  color: #f28a64;
+  color: var(--notice-action);
   cursor: pointer;
 }
 
