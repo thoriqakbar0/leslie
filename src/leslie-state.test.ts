@@ -9,8 +9,9 @@ const validState = {
       id: "task-one",
       listId: "inbox",
       title: "Prepare notes",
+      notes: "Review the latest agenda.",
       estimatedMinutes: 30,
-      createdAt: 100,
+      scheduledAt: 100,
     },
   ],
   workLog: [{ id: "log-one", note: "Reviewed notes.", createdAt: 200 }],
@@ -35,6 +36,31 @@ describe("Leslie state parser", () => {
       parseLeslieState({
         ...validState,
         tasks: [{ ...validState.tasks[0], listId: "missing" }],
+      }),
+    ).toBeNull();
+  });
+
+  it("preserves empty task notes and initializes absent task notes", () => {
+    expect(
+      parseLeslieState({
+        ...validState,
+        tasks: [{ ...validState.tasks[0], notes: "" }],
+      }),
+    ).toEqual({
+      ...validState,
+      tasks: [{ ...validState.tasks[0], notes: "" }],
+    });
+
+    const { notes: _notes, ...taskWithoutNotes } = validState.tasks[0];
+    expect(parseLeslieState({ ...validState, tasks: [taskWithoutNotes] })).toEqual({
+      ...validState,
+      tasks: [{ ...taskWithoutNotes, notes: "" }],
+    });
+
+    expect(
+      parseLeslieState({
+        ...validState,
+        tasks: [{ ...validState.tasks[0], notes: 42 }],
       }),
     ).toBeNull();
   });

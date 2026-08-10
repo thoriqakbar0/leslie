@@ -4,12 +4,10 @@ import leslieMarkUrl from "../assets/leslie-mark.png";
 import type { TaskList } from "../model";
 
 interface SidebarProps {
-  readonly activeListId: string | null;
-  readonly isSettingsActive: boolean;
+  readonly activeListId: string;
   readonly lists: readonly TaskList[];
   readonly onAddList: (name: string) => void;
   readonly onDeleteList: (id: string) => void;
-  readonly onOpenSettings: () => void;
   readonly onRenameList: (id: string, name: string) => void;
   readonly onSelectList: (id: string) => void;
 }
@@ -17,11 +15,9 @@ interface SidebarProps {
 /** Render Leslie's list switcher and inline list creator. */
 export function Sidebar({
   activeListId,
-  isSettingsActive,
   lists,
   onAddList,
   onDeleteList,
-  onOpenSettings,
   onRenameList,
   onSelectList,
 }: SidebarProps) {
@@ -95,20 +91,13 @@ export function Sidebar({
                     className="list-select"
                     onClick={() => onSelectList(list.id)}
                     onDoubleClick={() => startEditing(list)}
+                    title="Double-click to rename"
                     type="button"
                   >
                     {list.name}
                   </button>
-                  <div className="list-actions">
-                    <button
-                      aria-label={`Rename ${list.name}`}
-                      className="rename-list"
-                      onClick={() => startEditing(list)}
-                      type="button"
-                    >
-                      <span aria-hidden="true">✎</span>
-                    </button>
-                    {isActive && lists.length > 1 ? (
+                  {isActive && lists.length > 1 ? (
+                    <div className="list-actions">
                       <button
                         aria-label={`Delete ${list.name}`}
                         className="delete-list"
@@ -117,8 +106,8 @@ export function Sidebar({
                       >
                         <span aria-hidden="true">×</span>
                       </button>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
                 </>
               )}
             </div>
@@ -151,14 +140,6 @@ export function Sidebar({
           </button>
         )}
       </nav>
-      <button
-        aria-current={isSettingsActive ? "page" : undefined}
-        className={`sidebar-settings ${isSettingsActive ? "active" : ""}`}
-        onClick={onOpenSettings}
-        type="button"
-      >
-        Settings
-      </button>
     </aside>
   );
 }

@@ -8,11 +8,9 @@ describe("Sidebar brand", () => {
     const html = renderToStaticMarkup(
       createElement(Sidebar, {
         activeListId: "inbox",
-        isSettingsActive: false,
         lists: [{ id: "inbox", name: "Inbox" }],
         onAddList: () => undefined,
         onDeleteList: () => undefined,
-        onOpenSettings: () => undefined,
         onRenameList: () => undefined,
         onSelectList: () => undefined,
       }),
@@ -22,7 +20,9 @@ describe("Sidebar brand", () => {
     expect(html).toContain('height="329"');
     expect(html).toContain('width="512"');
     expect(html).toContain('translate="no">Leslie</span>');
-    expect(html).toContain('aria-label="Rename Inbox"');
-    expect(html).toContain(">Settings</button>");
+    expect(html).toContain('title="Double-click to rename"');
+    expect(html).not.toContain('aria-label="Rename Inbox"');
+    expect(html).not.toContain(">Notes</button>");
+    expect(html).not.toContain("Settings");
   });
 });

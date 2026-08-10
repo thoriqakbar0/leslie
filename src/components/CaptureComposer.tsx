@@ -5,16 +5,23 @@ import {
   ESTIMATE_OPTIONS,
   formatDuration,
   parseEstimate,
-  parsePlannedInput,
+  parsePlannedDuration,
 } from "../model";
 import type { EntryMode, EstimateMinutes } from "../model";
+import { parsePlannedInput } from "../planning";
 
 interface CaptureComposerProps {
   readonly captureInputRef: RefObject<HTMLInputElement | null>;
   readonly mode: EntryMode;
-  readonly onAddPlanned: (title: string, estimatedMinutes: EstimateMinutes) => void;
+  readonly onAddPlanned: (
+    title: string,
+    estimatedMinutes: EstimateMinutes,
+    scheduledAt: number,
+  ) => void;
   readonly onAddWorkLog: (note: string) => void;
   readonly onModeChange: (mode: EntryMode) => void;
+  readonly planningLocales: readonly string[];
+  readonly planningReference: Date;
 }
 
 /** Render one keyboard-first composer for planned work and completed work. */
@@ -24,6 +31,8 @@ export function CaptureComposer({
   onAddPlanned,
   onAddWorkLog,
   onModeChange,
+  planningLocales,
+  planningReference,
 }: CaptureComposerProps) {
   const [text, setText] = useState("");
   const [estimatedMinutes, setEstimatedMinutes] = useState<EstimateMinutes>(30);
@@ -44,8 +53,13 @@ export function CaptureComposer({
     if (mode === "did") {
       onAddWorkLog(cleanText);
     } else {
-      const planned = parsePlannedInput(cleanText, estimatedMinutes);
-      onAddPlanned(planned.title, planned.estimatedMinutes);
+      const planned = parsePlannedInput(
+        cleanText,
+        estimatedMinutes,
+        planningReference,
+        planningLocales,
+      );
+      onAddPlanned(planned.title, planned.estimatedMinutes, planned.scheduledAt);
     }
     setText("");
   }
@@ -92,7 +106,7 @@ export function CaptureComposer({
             setText(completedText);
             if (mode === "planned") {
               setEstimatedMinutes(
-                parsePlannedInput(completedText, estimatedMinutes).estimatedMinutes,
+                parsePlannedDuration(completedText, estimatedMinutes).estimatedMinutes,
               );
             }
           }}

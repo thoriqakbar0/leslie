@@ -18,8 +18,9 @@ export interface PlannedItem {
   readonly id: string;
   readonly listId: string;
   readonly title: string;
+  readonly notes: string;
   readonly estimatedMinutes: EstimateMinutes;
-  readonly createdAt: number;
+  readonly scheduledAt: number;
 }
 
 /** A record of work that the user did. */
@@ -47,7 +48,7 @@ const initialLists: readonly TaskList[] = [
   { id: "someday", name: "Someday" },
 ];
 
-const entryTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+const compactTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
   hourCycle: "h23",
@@ -80,7 +81,7 @@ function todayAt(now: Date, hours: number, minutes: number): number {
 
 /** Create the initial local document for a first Leslie launch. */
 export function createInitialState(now = new Date()): LeslieState {
-  const createdAt = now.getTime();
+  const scheduledAt = now.getTime();
   return {
     lists: initialLists,
     activeListId: "inbox",
@@ -89,37 +90,49 @@ export function createInitialState(now = new Date()): LeslieState {
         id: "task-invoice",
         listId: "inbox",
         title: "Send the invoice",
+        notes: "",
         estimatedMinutes: 30,
-        createdAt,
+        scheduledAt,
       },
-      { id: "task-alex", listId: "inbox", title: "Reply to Alex", estimatedMinutes: 15, createdAt },
+      {
+        id: "task-alex",
+        listId: "inbox",
+        title: "Reply to Alex",
+        notes: "",
+        estimatedMinutes: 15,
+        scheduledAt,
+      },
       {
         id: "task-dentist",
         listId: "inbox",
         title: "Book dentist appointment",
+        notes: "",
         estimatedMinutes: 30,
-        createdAt,
+        scheduledAt,
       },
       {
         id: "task-meeting",
         listId: "work",
         title: "Prepare meeting notes",
+        notes: "",
         estimatedMinutes: 60,
-        createdAt,
+        scheduledAt,
       },
       {
         id: "task-plants",
         listId: "personal",
         title: "Water the plants",
+        notes: "",
         estimatedMinutes: 15,
-        createdAt,
+        scheduledAt,
       },
       {
         id: "task-receipts",
         listId: "someday",
         title: "Sort travel receipts",
+        notes: "",
         estimatedMinutes: 120,
-        createdAt,
+        scheduledAt,
       },
     ],
     workLog: [
@@ -199,7 +212,7 @@ export function completePlannedClock(value: string): {
 }
 
 /** Extract a supported duration from the end of natural-language task text. */
-export function parsePlannedInput(
+export function parsePlannedDuration(
   value: string,
   fallbackMinutes: EstimateMinutes,
 ): { readonly title: string; readonly estimatedMinutes: EstimateMinutes } {
@@ -233,6 +246,19 @@ export function parsePlannedInput(
   return { title: title || cleanValue, estimatedMinutes: parsedMinutes };
 }
 
+/** Return planned items in one list and selected calendar range. */
+export function plannedItemsInRange(
+  tasks: readonly PlannedItem[],
+  listId: string,
+  scale: TimeScale,
+  anchor: Date,
+): readonly PlannedItem[] {
+  const [start, end] = timeScaleRange(scale, anchor);
+  return tasks.filter(
+    (task) => task.listId === listId && task.scheduledAt >= start && task.scheduledAt < end,
+  );
+}
+
 /** Format an expected-time value for controls and rows. */
 export function formatDuration(minutes: EstimateMinutes): string {
   if (minutes < 60) return `${minutes} min`;
@@ -240,9 +266,9 @@ export function formatDuration(minutes: EstimateMinutes): string {
   return `${hours} ${hours === 1 ? "hr" : "hrs"}`;
 }
 
-/** Format a work-log timestamp as a compact local time. */
-export function formatEntryTime(timestamp: number): string {
-  return entryTimeFormatter.format(new Date(timestamp));
+/** Format a timestamp as a compact local time. */
+export function formatCompactTime(timestamp: number): string {
+  return compactTimeFormatter.format(new Date(timestamp));
 }
 
 /** Format a local clock value with seconds in 24-hour time. */

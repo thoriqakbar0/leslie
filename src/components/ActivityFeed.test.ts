@@ -8,8 +8,9 @@ const task: PlannedItem = {
   id: "task-one",
   listId: "inbox",
   title: "Send the invoice",
+  notes: "Send before lunch.",
   estimatedMinutes: 30,
-  createdAt: 100,
+  scheduledAt: new Date(2026, 7, 10, 14, 0).getTime(),
 };
 
 const log: WorkLogEntry = {
@@ -22,13 +23,17 @@ function renderFeed(tasks: readonly PlannedItem[], workLog: readonly WorkLogEntr
   return renderToStaticMarkup(
     createElement(ActivityFeed, {
       activeListName: "Inbox",
+      isPlaying: false,
+      playingTaskId: null,
       tasks,
       timeScale: "day",
       workLog,
       onComplete: () => undefined,
       onEstimateChange: () => undefined,
+      onOpenNotes: () => undefined,
       onRemoveTask: () => undefined,
       onRemoveWorkLog: () => undefined,
+      onTogglePlaying: () => undefined,
     }),
   );
 }
@@ -54,5 +59,10 @@ describe("ActivityFeed empty states", () => {
 
     expect(html).toContain("No work recorded for this day.");
     expect(html).toContain("Send the invoice");
+    expect(html).toContain("Planned");
+    expect(html).toContain("14:00</time>");
+    expect(html).toContain('aria-label="Play Send the invoice"');
+    expect(html).toContain('aria-label="Open notes for Send the invoice"');
+    expect(html).not.toContain(">Notes</button>");
   });
 });

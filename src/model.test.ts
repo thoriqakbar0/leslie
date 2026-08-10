@@ -2,8 +2,9 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   completePlannedClock,
   formatClockTime,
-  formatEntryTime,
-  parsePlannedInput,
+  formatCompactTime,
+  parsePlannedDuration,
+  plannedItemsInRange,
   removeWorkLogEntry,
   restoreWorkLogEntry,
   timeScaleHeading,
@@ -32,15 +33,15 @@ describe("planned input", () => {
   });
 
   it("accepts natural-language time estimates", () => {
-    expect(parsePlannedInput("Send invoice in about 30 minutes", 15)).toEqual({
+    expect(parsePlannedDuration("Send invoice in about 30 minutes", 15)).toEqual({
       title: "Send invoice",
       estimatedMinutes: 30,
     });
-    expect(parsePlannedInput("Draft summary for half an hour", 15)).toEqual({
+    expect(parsePlannedDuration("Draft summary for half an hour", 15)).toEqual({
       title: "Draft summary",
       estimatedMinutes: 30,
     });
-    expect(parsePlannedInput("Deep work for two hours", 15)).toEqual({
+    expect(parsePlannedDuration("Deep work for two hours", 15)).toEqual({
       title: "Deep work",
       estimatedMinutes: 120,
     });
@@ -51,7 +52,7 @@ describe("time formatting", () => {
   const evening = new Date(2026, 7, 10, 18, 5, 7);
 
   it("uses 24-hour time for work-log entries", () => {
-    expect(formatEntryTime(evening.getTime())).toBe("18:05");
+    expect(formatCompactTime(evening.getTime())).toBe("18:05");
   });
 
   it("uses 24-hour time with seconds for the live clock", () => {
@@ -82,6 +83,65 @@ describe("timeScaleRange", () => {
 
     expect(start).toBe(new Date(2026, 7, 1).getTime());
     expect(end).toBe(new Date(2026, 8, 1).getTime());
+  });
+});
+
+describe("plannedItemsInRange", () => {
+  const start = new Date(2026, 7, 10).getTime();
+  const nextDay = new Date(2026, 7, 11).getTime();
+  const tasks = [
+    {
+      id: "at-start",
+      listId: "inbox",
+      title: "At start",
+      notes: "",
+      estimatedMinutes: 30 as const,
+      scheduledAt: start,
+    },
+    {
+      id: "before-end",
+      listId: "inbox",
+      title: "Before end",
+      notes: "",
+      estimatedMinutes: 30 as const,
+      scheduledAt: nextDay - 1,
+    },
+    {
+      id: "at-end",
+      listId: "inbox",
+      title: "At end",
+      notes: "",
+      estimatedMinutes: 30 as const,
+      scheduledAt: nextDay,
+    },
+    {
+      id: "other-list",
+      listId: "work",
+      title: "Other list",
+      notes: "",
+      estimatedMinutes: 30 as const,
+      scheduledAt: start,
+    },
+  ];
+
+  it("includes the start and excludes the end of a selected day", () => {
+    expect(plannedItemsInRange(tasks, "inbox", "day", new Date(2026, 7, 10))).toEqual([
+      tasks[0],
+      tasks[1],
+    ]);
+  });
+
+  it("uses week and month calendar boundaries", () => {
+    expect(plannedItemsInRange(tasks, "inbox", "week", new Date(2026, 7, 12))).toEqual([
+      tasks[0],
+      tasks[1],
+      tasks[2],
+    ]);
+    expect(plannedItemsInRange(tasks, "inbox", "month", new Date(2026, 7, 20))).toEqual([
+      tasks[0],
+      tasks[1],
+      tasks[2],
+    ]);
   });
 });
 

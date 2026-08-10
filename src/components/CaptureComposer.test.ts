@@ -12,6 +12,8 @@ function renderComposer() {
       onAddPlanned: () => undefined,
       onAddWorkLog: () => undefined,
       onModeChange: () => undefined,
+      planningLocales: ["en"],
+      planningReference: new Date(2026, 7, 10, 14, 0),
     }),
   );
 }

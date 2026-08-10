@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { parseLeslieState } from "../shared/leslie-state.mjs";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function schemaVersion(database) {
   const row = database.prepare("PRAGMA user_version").get();
@@ -11,6 +11,15 @@ function schemaVersion(database) {
 function initializeSchema(database) {
   const version = schemaVersion(database);
   if (version === SCHEMA_VERSION) return;
+  if (version === 1) {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT '';
+      PRAGMA user_version = ${SCHEMA_VERSION};
+      COMMIT;
+    `);
+    return;
+  }
   if (version !== 0) throw new Error("Leslie database schema is not supported");
 
   database.exec(`
@@ -31,6 +40,7 @@ function initializeSchema(database) {
       id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
       list_id TEXT NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
       title TEXT NOT NULL CHECK (length(trim(title)) > 0),
+      notes TEXT NOT NULL,
       estimated_minutes INTEGER NOT NULL CHECK (estimated_minutes IN (15, 30, 60, 120, 240, 480)),
       created_at INTEGER NOT NULL CHECK (created_at >= 0),
       position INTEGER NOT NULL UNIQUE CHECK (position >= 0)
@@ -77,7 +87,7 @@ export function createLeslieDatabase(databasePath) {
 
   const insertList = database.prepare("INSERT INTO lists (id, name, position) VALUES (?, ?, ?)");
   const insertTask = database.prepare(
-    "INSERT INTO tasks (id, list_id, title, estimated_minutes, created_at, position) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO tasks (id, list_id, title, notes, estimated_minutes, created_at, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const insertWorkLog = database.prepare(
     "INSERT INTO work_log (id, note, created_at, position) VALUES (?, ?, ?, ?)",
@@ -111,15 +121,16 @@ export function createLeslieDatabase(databasePath) {
           .map((row) => ({ id: row.id, name: row.name })),
         tasks: database
           .prepare(
-            "SELECT id, list_id, title, estimated_minutes, created_at FROM tasks ORDER BY position",
+            "SELECT id, list_id, title, notes, estimated_minutes, created_at FROM tasks ORDER BY position",
           )
           .all()
           .map((row) => ({
             id: row.id,
             listId: row.list_id,
             title: row.title,
+            notes: row.notes,
             estimatedMinutes: row.estimated_minutes,
-            createdAt: row.created_at,
+            scheduledAt: row.created_at,
           })),
         workLog: database
           .prepare("SELECT id, note, created_at FROM work_log ORDER BY position")
@@ -147,8 +158,9 @@ export function createLeslieDatabase(databasePath) {
             task.id,
             task.listId,
             task.title,
+            task.notes,
             task.estimatedMinutes,
-            task.createdAt,
+            task.scheduledAt,
             position,
           ),
         );

@@ -26,18 +26,21 @@ function parseTask(value, listIds) {
   const id = parseNonEmptyString(value.id);
   const listId = parseNonEmptyString(value.listId);
   const title = parseNonEmptyString(value.title);
-  const createdAt = parseTimestamp(value.createdAt);
+  const notes =
+    value.notes === undefined ? "" : typeof value.notes === "string" ? value.notes : null;
+  const scheduledAt = parseTimestamp(value.scheduledAt);
   if (
     id === null ||
     listId === null ||
     !listIds.has(listId) ||
     title === null ||
+    notes === null ||
     !ESTIMATE_MINUTES.has(value.estimatedMinutes) ||
-    createdAt === null
+    scheduledAt === null
   ) {
     return null;
   }
-  return { id, listId, title, estimatedMinutes: value.estimatedMinutes, createdAt };
+  return { id, listId, title, notes, estimatedMinutes: value.estimatedMinutes, scheduledAt };
 }
 
 function parseWorkLogEntry(value) {

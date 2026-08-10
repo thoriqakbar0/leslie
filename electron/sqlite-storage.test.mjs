@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { createLeslieDatabase } from "./sqlite-storage.mjs";
 
@@ -15,8 +16,9 @@ const state = {
       id: "task-one",
       listId: "work",
       title: "Prepare notes",
+      notes: "Review the latest agenda.",
       estimatedMinutes: 30,
-      createdAt: 100,
+      scheduledAt: 100,
     },
   ],
   workLog: [{ id: "log-one", note: "Reviewed notes.", createdAt: 200 }],
@@ -41,6 +43,57 @@ afterEach(() => {
 });
 
 describe("SQLite storage", () => {
+  it("adds empty notes when opening a version-one database", () => {
+    const directory = mkdtempSync(path.join(tmpdir(), "leslie-sqlite-test-"));
+    temporaryDirectories.push(directory);
+    const databasePath = path.join(directory, "leslie.sqlite3");
+    const previousDatabase = new DatabaseSync(databasePath);
+    previousDatabase.exec(`
+      CREATE TABLE lists (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        position INTEGER NOT NULL UNIQUE
+      ) STRICT;
+      CREATE TABLE app_state (
+        singleton INTEGER PRIMARY KEY,
+        active_list_id TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY NOT NULL,
+        list_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        estimated_minutes INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        position INTEGER NOT NULL UNIQUE
+      ) STRICT;
+      CREATE TABLE work_log (
+        id TEXT PRIMARY KEY NOT NULL,
+        note TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        position INTEGER NOT NULL UNIQUE
+      ) STRICT;
+      INSERT INTO lists VALUES ('inbox', 'Inbox', 0);
+      INSERT INTO app_state VALUES (1, 'inbox');
+      INSERT INTO tasks VALUES ('task-old', 'inbox', 'Existing task', 30, 100, 0);
+      PRAGMA user_version = 1;
+    `);
+    previousDatabase.close();
+
+    const database = createLeslieDatabase(databasePath);
+    databases.push(database);
+
+    expect(database.loadState()?.tasks).toEqual([
+      {
+        id: "task-old",
+        listId: "inbox",
+        title: "Existing task",
+        notes: "",
+        estimatedMinutes: 30,
+        scheduledAt: 100,
+      },
+    ]);
+  });
+
   it("starts empty and round-trips the complete state", () => {
     const database = openDatabase();
 
