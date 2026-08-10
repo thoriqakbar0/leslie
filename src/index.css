@@ -447,7 +447,7 @@ body:has(.notes-sidebar) {
 }
 
 .rich-checklist-item.is-checked::before {
-  border-color: var(--accent);
+  border-color: var(--on-accent);
   background: var(--accent);
 }
 
@@ -457,7 +457,7 @@ body:has(.notes-sidebar) {
   left: 5px;
   width: 4px;
   height: 8px;
-  border: solid var(--paper);
+  border: solid var(--on-accent);
   border-width: 0 1.5px 1.5px 0;
   content: "";
   transform: rotate(45deg);
