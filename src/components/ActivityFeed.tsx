@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { parseEntryLabels } from "../entry-labels";
 import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
 import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
@@ -18,6 +18,14 @@ interface ActivityFeedProps {
   readonly onRemoveWorkLog: (id: string) => void;
   readonly onTogglePlaying: (id: string) => void;
 }
+
+type WorkLogSort = "newest" | "oldest";
+
+const workLogDateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
 function PlayIcon({ isPlaying }: { readonly isPlaying: boolean }) {
   return isPlaying ? (
@@ -64,6 +72,17 @@ export function ActivityFeed({
   onRemoveWorkLog,
   onTogglePlaying,
 }: ActivityFeedProps) {
+  const [workLogSort, setWorkLogSort] = useState<WorkLogSort>("newest");
+  const sortedWorkLog = useMemo(
+    () =>
+      [...workLog].sort((left, right) =>
+        workLogSort === "newest"
+          ? right.createdAt - left.createdAt
+          : left.createdAt - right.createdAt,
+      ),
+    [workLog, workLogSort],
+  );
+
   useEffect(() => {
     function navigatePlannedTasks(event: KeyboardEvent) {
       if (
@@ -258,16 +277,34 @@ export function ActivityFeed({
       </span>
 
       <section aria-labelledby="did-section-title" className="activity-group">
-        <header className="activity-group-header activity-group-header-simple">
+        <header className="activity-group-header did-header">
           <h2 id="did-section-title">Did</h2>
+          {workLog.length > 1 ? (
+            <label className="did-sort">
+              <span>Sort</span>
+              <select
+                aria-label="Sort completed work"
+                onChange={(event) => {
+                  const nextSort = event.target.value;
+                  if (nextSort === "newest" || nextSort === "oldest") setWorkLogSort(nextSort);
+                }}
+                value={workLogSort}
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+            </label>
+          ) : null}
         </header>
 
-        {workLog.map((entry) => {
+        {sortedWorkLog.map((entry) => {
           const labeledNote = parseEntryLabels(entry.note);
+          const entryDate = new Date(entry.createdAt);
           return (
             <article className="activity-row log-row" key={entry.id}>
-              <time dateTime={new Date(entry.createdAt).toISOString()}>
-                {formatCompactTime(entry.createdAt)}
+              <time className="log-date" dateTime={entryDate.toISOString()}>
+                <span>{workLogDateFormatter.format(entryDate)}</span>
+                <strong>{formatCompactTime(entry.createdAt)}</strong>
               </time>
               <div className="activity-copy">
                 <span className="activity-kind">Did</span>

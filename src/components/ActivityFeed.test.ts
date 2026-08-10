@@ -107,4 +107,15 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain("<li>@urgent</li>");
     expect(html).not.toContain(">Send the invoice @work @urgent</button>");
   });
+
+  it("shows dates and sorting for completed work", () => {
+    const laterLog = { ...log, id: "log-two", note: "Sent the invoice.", createdAt: 400 };
+    const html = renderFeed([], [log, laterLog]);
+
+    expect(html).toContain('aria-label="Sort completed work"');
+    expect(html).toContain(">Newest first</option>");
+    expect(html).toContain(">Oldest first</option>");
+    expect(html).toContain('class="log-date"');
+    expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
+  });
 });
