@@ -1,4 +1,5 @@
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
+import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -38,6 +39,28 @@ interface PersistencePluginProps {
   readonly initialMarkdown: string;
   readonly onEscape: () => void;
   readonly onMarkdownChange: (markdown: string) => void;
+}
+
+function NotesToolbarPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <p className="notes-format-hint">
+      <kbd>-</kbd> list <span aria-hidden="true">·</span>{" "}
+      <button
+        aria-label="Insert checklist"
+        className="notes-checklist-button"
+        onClick={() => {
+          editor.focus(() => editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined));
+        }}
+        type="button"
+      >
+        <span aria-hidden="true" className="notes-checkbox-icon" />
+        checklist
+      </button>{" "}
+      <span aria-hidden="true">·</span> <kbd>#</kbd> heading
+    </p>
+  );
 }
 
 function PersistencePlugin({
@@ -143,6 +166,7 @@ export function MarkdownNotesEditor({
         },
       }}
     >
+      <NotesToolbarPlugin />
       <div className="notes-editor-surface">
         <RichTextPlugin
           contentEditable={

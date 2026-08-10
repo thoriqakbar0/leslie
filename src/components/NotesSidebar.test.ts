@@ -37,7 +37,8 @@ describe("Notes sidebar", () => {
     expect(html).toContain('id="notes-rich-editor"');
     expect(html).toContain('contentEditable="true"');
     expect(html).toContain("Write notes…");
-    expect(html).toContain("- []</kbd> checklist");
+    expect(html).toContain('aria-label="Insert checklist"');
+    expect(html).toContain('class="notes-checkbox-icon"');
     expect(html).toContain("Send the invoice");
     expect(html.indexOf('class="notes-format-hint"')).toBeLessThan(
       html.indexOf('id="notes-rich-editor"'),
@@ -56,5 +57,9 @@ describe("Notes sidebar", () => {
     ].join("\n");
 
     expect(roundTripMarkdown(markdown)).toBe(markdown);
+  });
+
+  it("accepts the compact checklist shortcut shown in the editor", () => {
+    expect(roundTripMarkdown("- [] follow up")).toBe("- [ ] follow up");
   });
 });

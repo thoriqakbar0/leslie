@@ -29,10 +29,6 @@ export function NotesSidebar({ notes, onClose, onNotesChange, taskTitle }: Notes
         </button>
       </header>
       <div className="notes-editor">
-        <p className="notes-format-hint">
-          <kbd>-</kbd> list <span aria-hidden="true">·</span> <kbd>- []</kbd> checklist{" "}
-          <span aria-hidden="true">·</span> <kbd>#</kbd> heading
-        </p>
         <MarkdownNotesEditor
           ariaLabel={`Notes for ${taskTitle}`}
           markdown={notes}

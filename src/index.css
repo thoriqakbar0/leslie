@@ -494,6 +494,33 @@ body:has(.notes-sidebar) {
   color: var(--muted);
 }
 
+.notes-checklist-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.notes-checklist-button:hover,
+.notes-checklist-button:focus-visible {
+  background: var(--selected);
+  color: var(--accent);
+}
+
+.notes-checkbox-icon {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
 .page-header,
 .stream {
   width: min(100%, 920px);
