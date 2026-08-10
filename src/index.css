@@ -359,10 +359,16 @@ body:has(.notes-sidebar) {
   padding: 20px 52px 48px;
 }
 
-.rich-notes-editor {
+.notes-editor-surface {
+  position: relative;
   width: min(100%, 780px);
   flex: 1;
   min-height: 0;
+}
+
+.rich-notes-editor {
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
   padding: 0;
   border: 0;
@@ -373,9 +379,12 @@ body:has(.notes-sidebar) {
   caret-color: var(--accent);
 }
 
-.rich-notes-editor:empty::before {
-  content: attr(data-placeholder);
+.rich-notes-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
   color: var(--faint);
+  font: 400 18px/1.7 var(--serif);
   pointer-events: none;
 }
 
@@ -384,6 +393,7 @@ body:has(.notes-sidebar) {
 }
 
 .rich-notes-editor p,
+.rich-notes-editor h1,
 .rich-notes-editor h2,
 .rich-notes-editor h3,
 .rich-notes-editor blockquote,
@@ -391,10 +401,11 @@ body:has(.notes-sidebar) {
   margin: 0 0 0.8em;
 }
 
-.rich-notes-editor h2 {
+.rich-notes-editor h1 {
   font: 500 32px/1.15 var(--serif);
 }
 
+.rich-notes-editor h2,
 .rich-notes-editor h3 {
   font: 500 24px/1.2 var(--serif);
 }
@@ -414,17 +425,42 @@ body:has(.notes-sidebar) {
   list-style: none;
 }
 
-.rich-checklist li {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+.rich-checklist-item {
+  position: relative;
+  padding-inline-start: 28px;
+  list-style: none;
 }
 
-.rich-checklist input {
-  width: 18px;
-  height: 18px;
-  flex: none;
-  accent-color: var(--accent);
+.rich-checklist-item::before {
+  position: absolute;
+  top: 0.43em;
+  left: 0;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  content: "";
+}
+
+.rich-checklist-item.is-checked {
+  color: var(--muted);
+}
+
+.rich-checklist-item.is-checked::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.rich-checklist-item.is-checked::after {
+  position: absolute;
+  top: 0.47em;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--paper);
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  transform: rotate(45deg);
 }
 
 .rich-notes-editor code {
@@ -436,6 +472,12 @@ body:has(.notes-sidebar) {
     SFMono-Regular,
     Menlo,
     monospace;
+}
+
+.rich-notes-editor a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
 }
 
 .notes-format-hint {

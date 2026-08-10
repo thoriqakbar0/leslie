@@ -1,8 +1,25 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
-import { notesMarkdownToHtml } from "../notes-markdown";
+import { createEditor } from "lexical";
+import {
+  $exportNotesMarkdown,
+  $importNotesMarkdown,
+  NOTES_EDITOR_NODES,
+} from "../notes-editor-config";
 import { NotesSidebar } from "./NotesSidebar";
+
+function roundTripMarkdown(markdown: string): string {
+  const editor = createEditor({
+    namespace: "NotesSidebarTest",
+    nodes: NOTES_EDITOR_NODES,
+    onError: (error) => {
+      throw error;
+    },
+  });
+  editor.update(() => $importNotesMarkdown(markdown), { discrete: true });
+  return editor.getEditorState().read($exportNotesMarkdown);
+}
 
 describe("Notes sidebar", () => {
   it("renders the editable note and close control", () => {
@@ -19,7 +36,7 @@ describe("Notes sidebar", () => {
     expect(html).toContain('aria-label="Close notes for Send the invoice"');
     expect(html).toContain('id="notes-rich-editor"');
     expect(html).toContain('contentEditable="true"');
-    expect(html).toContain('data-placeholder="Write notes…"');
+    expect(html).toContain("Write notes…");
     expect(html).toContain("- []</kbd> checklist");
     expect(html).toContain("Send the invoice");
     expect(html.indexOf('class="notes-format-hint"')).toBeLessThan(
@@ -27,12 +44,17 @@ describe("Notes sidebar", () => {
     );
   });
 
-  it("renders markdown as rich notes without storing html", () => {
-    expect(notesMarkdownToHtml("# Plan\n- first\n- [ ] second")).toContain(
-      '<h2>Plan</h2><ul><li>first</li></ul><ul class="rich-checklist">',
-    );
-    expect(notesMarkdownToHtml("**bold** and *italic*")).toContain(
-      "<strong>bold</strong> and <em>italic</em>",
-    );
+  it("round-trips the supported rich-text syntax as markdown", () => {
+    const markdown = [
+      "# Plan",
+      "- first",
+      "- [ ] second",
+      "",
+      "> context",
+      "",
+      "**bold** and *italic* with `code` and [Leslie](https://example.com)",
+    ].join("\n");
+
+    expect(roundTripMarkdown(markdown)).toBe(markdown);
   });
 });

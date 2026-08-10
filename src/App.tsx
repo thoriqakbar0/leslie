@@ -559,6 +559,7 @@ function App() {
 
       {activeNotesTask ? (
         <NotesSidebar
+          key={activeNotesTask.id}
           notes={activeNotesTask.notes}
           onClose={closeTaskNotes}
           onNotesChange={(notes) => changeTaskNotes(activeNotesTask.id, notes)}
