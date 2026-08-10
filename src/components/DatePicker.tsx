@@ -45,6 +45,15 @@ function moveMonth(value: Date, offset: number): Date {
   return new Date(value.getFullYear(), value.getMonth() + offset, 1);
 }
 
+function MonthArrow({ direction }: { readonly direction: "previous" | "next" }) {
+  const path = direction === "previous" ? "m12.5 5-5 5 5 5" : "m7.5 5 5 5-5 5";
+  return (
+    <svg aria-hidden="true" className="month-arrow" viewBox="0 0 20 20">
+      <path d={path} />
+    </svg>
+  );
+}
+
 /** Render a keyboard-operable calendar for selecting Leslie's active date. */
 export function DatePicker({ onClose, onSelect, selectedDate }: DatePickerProps) {
   const [visibleMonth, setVisibleMonth] = useState(
@@ -125,7 +134,7 @@ export function DatePicker({ onClose, onSelect, selectedDate }: DatePickerProps)
           onClick={() => setVisibleMonth((current) => moveMonth(current, -1))}
           type="button"
         >
-          <span aria-hidden="true">‹</span>
+          <MonthArrow direction="previous" />
         </button>
         <strong aria-live="polite">{monthFormatter.format(visibleMonth)}</strong>
         <button
@@ -133,7 +142,7 @@ export function DatePicker({ onClose, onSelect, selectedDate }: DatePickerProps)
           onClick={() => setVisibleMonth((current) => moveMonth(current, 1))}
           type="button"
         >
-          <span aria-hidden="true">›</span>
+          <MonthArrow direction="next" />
         </button>
       </div>
 

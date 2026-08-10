@@ -695,21 +695,24 @@ body:has(.notes-sidebar) {
   z-index: 4;
   top: 54px;
   inset-inline-start: 0;
-  width: 256px;
-  height: 290px;
+  width: 272px;
+  height: 304px;
   display: grid;
-  grid-template-rows: 28px 18px minmax(0, 1fr) 24px;
-  gap: 5px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  grid-template-rows: 32px 20px minmax(0, 1fr) 30px;
+  gap: 7px;
+  padding: 12px;
+  border: 0;
+  border-radius: 14px;
   background: var(--paper);
-  box-shadow: 0 16px 42px var(--shadow-popover);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 18px -8px color-mix(in srgb, var(--shadow-popover) 72%, transparent),
+    0 24px 52px -18px var(--shadow-popover);
 }
 
 .date-picker-header {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
   align-items: center;
 }
 
@@ -731,14 +734,25 @@ body:has(.notes-sidebar) {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
 }
 
 .date-picker-header button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 22px;
-  line-height: 1;
+}
+
+.month-arrow {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
 }
 
 .date-picker-weekdays,
@@ -760,13 +774,14 @@ body:has(.notes-sidebar) {
 .date-picker-grid {
   min-height: 0;
   grid-template-rows: repeat(6, minmax(0, 1fr));
-  gap: 1px;
+  gap: 2px;
 }
 
 .date-picker-grid button {
-  width: 100%;
-  min-height: 0;
-  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  justify-self: center;
+  border-radius: 50%;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -778,12 +793,18 @@ body:has(.notes-sidebar) {
   color: var(--accent);
 }
 
+.date-picker-header button:active,
+.date-picker-grid button:active,
+.date-picker-today:active {
+  scale: 0.96;
+}
+
 .date-picker-grid button[data-outside-month="true"] {
   color: color-mix(in srgb, var(--faint) 58%, transparent);
 }
 
 .date-picker-grid button.is-today {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .date-picker-grid button[aria-current="date"] {
@@ -793,11 +814,12 @@ body:has(.notes-sidebar) {
 
 .date-picker-today {
   width: 100%;
-  height: 24px;
+  height: 30px;
   border-top: 1px solid var(--line);
-  border-radius: 0 0 5px 5px;
+  border-radius: 0 0 7px 7px;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .capture-section {
