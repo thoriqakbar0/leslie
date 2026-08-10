@@ -1154,6 +1154,30 @@ kbd {
   margin-top: 5px;
 }
 
+.entry-labels {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry-labels li {
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--selected);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.activity-copy .entry-labels {
+  margin-top: 6px;
+}
+
 .task-card-metadata {
   margin: 0;
   color: var(--muted);

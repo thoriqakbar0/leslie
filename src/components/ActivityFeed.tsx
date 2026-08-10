@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { parseEntryLabels } from "../entry-labels";
 import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
 import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
 import { taskNavigationIndex } from "../task-navigation";
@@ -35,6 +36,17 @@ function isTypingTarget(target: EventTarget | null): boolean {
   if (target.closest("input, textarea, select") !== null) return true;
   const editable = target.closest<HTMLElement>("[contenteditable]");
   return editable !== null && editable.contentEditable !== "false";
+}
+
+function EntryLabels({ labels }: { readonly labels: readonly string[] }) {
+  if (labels.length === 0) return null;
+  return (
+    <ul aria-label="Labels" className="entry-labels">
+      {labels.map((label) => (
+        <li key={label}>{label}</li>
+      ))}
+    </ul>
+  );
 }
 
 /** Render planned items and completed-work entries as one chronological work surface. */
@@ -139,6 +151,8 @@ export function ActivityFeed({
           <p className="activity-empty-note">No planned items in {activeListName}.</p>
         ) : (
           tasks.map((task) => {
+            const labeledTitle = parseEntryLabels(task.title);
+            const visibleTitle = labeledTitle.text || "Untitled";
             const isCurrentTask = playingTaskId === task.id;
             const isTaskPlaying = isCurrentTask && isPlaying;
             const taskState = isCurrentTask
@@ -163,7 +177,7 @@ export function ActivityFeed({
                 key={task.id}
               >
                 <button
-                  aria-label={`Complete ${task.title}`}
+                  aria-label={`Complete ${visibleTitle}`}
                   className="task-check"
                   onClick={() => onComplete(task.id)}
                   type="button"
@@ -178,7 +192,7 @@ export function ActivityFeed({
                       onClick={() => onOpenNotes(task.id)}
                       type="button"
                     >
-                      {task.title}
+                      {visibleTitle}
                     </button>
                   </h3>
                   <div className="task-card-details">
@@ -210,12 +224,13 @@ export function ActivityFeed({
                         ))}
                       </select>
                     </div>
+                    <EntryLabels labels={labeledTitle.labels} />
                   </div>
                 </div>
                 <div className="task-card-actions">
                   <button
                     aria-describedby={`${metadataId} playback-action-hint`}
-                    aria-label={`Playback for ${task.title}`}
+                    aria-label={`Playback for ${visibleTitle}`}
                     aria-pressed={isTaskPlaying}
                     className="task-play"
                     onClick={() => onTogglePlaying(task.id)}
@@ -224,7 +239,7 @@ export function ActivityFeed({
                     <PlayIcon isPlaying={isTaskPlaying} />
                   </button>
                   <button
-                    aria-label={`Remove ${task.title}`}
+                    aria-label={`Remove ${visibleTitle}`}
                     className="remove-item"
                     onClick={() => onRemoveTask(task.id)}
                     type="button"
@@ -247,25 +262,29 @@ export function ActivityFeed({
           <h2 id="did-section-title">Did</h2>
         </header>
 
-        {workLog.map((entry) => (
-          <article className="activity-row log-row" key={entry.id}>
-            <time dateTime={new Date(entry.createdAt).toISOString()}>
-              {formatCompactTime(entry.createdAt)}
-            </time>
-            <div className="activity-copy">
-              <span className="activity-kind">Did</span>
-              <p>{entry.note}</p>
-            </div>
-            <button
-              aria-label={`Delete work log: ${entry.note}`}
-              className="remove-item"
-              onClick={() => onRemoveWorkLog(entry.id)}
-              type="button"
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-          </article>
-        ))}
+        {workLog.map((entry) => {
+          const labeledNote = parseEntryLabels(entry.note);
+          return (
+            <article className="activity-row log-row" key={entry.id}>
+              <time dateTime={new Date(entry.createdAt).toISOString()}>
+                {formatCompactTime(entry.createdAt)}
+              </time>
+              <div className="activity-copy">
+                <span className="activity-kind">Did</span>
+                <p>{labeledNote.text || "Untitled"}</p>
+                <EntryLabels labels={labeledNote.labels} />
+              </div>
+              <button
+                aria-label={`Delete work log: ${entry.note}`}
+                className="remove-item"
+                onClick={() => onRemoveWorkLog(entry.id)}
+                type="button"
+              >
+                <span aria-hidden="true">×</span>
+              </button>
+            </article>
+          );
+        })}
 
         {workLog.length === 0 ? (
           <p className="activity-empty-note">No work recorded for this {rangeName}.</p>

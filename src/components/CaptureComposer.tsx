@@ -163,7 +163,8 @@ export function CaptureComposer({
             {" "}
             <span aria-hidden="true">·</span> type <kbd>8:</kbd> to complete <kbd>08:00</kbd>
           </>
-        ) : null}
+        ) : null}{" "}
+        <span aria-hidden="true">·</span> type <kbd>@work</kbd> to add a label
       </p>
     </section>
   );

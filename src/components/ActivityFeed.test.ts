@@ -95,4 +95,16 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain("is-current is-playing");
   });
+
+  it("renders at-labels separately from entry text", () => {
+    const labeledTask = { ...task, title: "Send the invoice @work @urgent" };
+    const labeledLog = { ...log, note: "Reviewed the invoice @work" };
+    const html = renderFeed([labeledTask], [labeledLog]);
+
+    expect(html).toContain(">Send the invoice</button>");
+    expect(html).toContain('aria-label="Labels"');
+    expect(html).toContain("<li>@work</li>");
+    expect(html).toContain("<li>@urgent</li>");
+    expect(html).not.toContain(">Send the invoice @work @urgent</button>");
+  });
 });
