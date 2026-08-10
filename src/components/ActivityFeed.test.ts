@@ -68,7 +68,9 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain("Send the invoice");
     expect(html).toContain("Planned");
     expect(html).toContain("14:00</time>");
-    expect(html).toContain('aria-label="Play Send the invoice"');
+    expect(html).toContain('aria-label="Playback for Send the invoice"');
+    expect(html).toContain('aria-describedby="task-metadata-task-one playback-action-hint"');
+    expect(html).toContain("Press to switch between playing and paused.");
     expect(html).toContain("Opens task notes.");
     expect(html).toContain('aria-describedby="task-metadata-task-one task-notes-action-hint"');
     expect(html).toContain('aria-keyshortcuts="j k"');
@@ -89,7 +91,8 @@ describe("ActivityFeed empty states", () => {
     const html = renderFeed([task], [], { isPlaying: true, playingTaskId: task.id });
 
     expect(html).toContain("Working now");
-    expect(html).toContain('aria-label="Pause Send the invoice"');
+    expect(html).toContain('aria-label="Playback for Send the invoice"');
     expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain("is-current is-playing");
   });
 });

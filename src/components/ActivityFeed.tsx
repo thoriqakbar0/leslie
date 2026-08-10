@@ -20,11 +20,11 @@ interface ActivityFeedProps {
 
 function PlayIcon({ isPlaying }: { readonly isPlaying: boolean }) {
   return isPlaying ? (
-    <svg aria-hidden="true" viewBox="0 0 20 20">
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
       <path d="M6.5 5.5v9M13.5 5.5v9" />
     </svg>
   ) : (
-    <svg aria-hidden="true" viewBox="0 0 20 20">
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
       <path d="m7 5 7 5-7 5Z" />
     </svg>
   );
@@ -152,7 +152,13 @@ export function ActivityFeed({
               <article
                 aria-describedby={metadataId}
                 aria-labelledby={titleId}
-                className={`activity-row planned-row ${isCurrentTask ? "is-current" : ""}`}
+                className={`activity-row planned-row ${
+                  isCurrentTask
+                    ? isTaskPlaying
+                      ? "is-current is-playing"
+                      : "is-current is-paused"
+                    : ""
+                }`}
                 data-task-card={task.id}
                 key={task.id}
               >
@@ -208,7 +214,8 @@ export function ActivityFeed({
                 </div>
                 <div className="task-card-actions">
                   <button
-                    aria-label={`${isTaskPlaying ? "Pause" : "Play"} ${task.title}`}
+                    aria-describedby={`${metadataId} playback-action-hint`}
+                    aria-label={`Playback for ${task.title}`}
                     aria-pressed={isTaskPlaying}
                     className="task-play"
                     onClick={() => onTogglePlaying(task.id)}
@@ -230,6 +237,10 @@ export function ActivityFeed({
           })
         )}
       </section>
+
+      <span className="visually-hidden" id="playback-action-hint">
+        Press to switch between playing and paused.
+      </span>
 
       <section aria-labelledby="did-section-title" className="activity-group">
         <header className="activity-group-header activity-group-header-simple">

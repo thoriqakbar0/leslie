@@ -1028,6 +1028,10 @@ kbd {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+.planned-row.is-paused {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
 .planned-row:has(.task-notes-trigger:focus-visible) {
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
@@ -1139,9 +1143,10 @@ kbd {
 }
 
 .task-play {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   flex: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
 }
@@ -1156,9 +1161,14 @@ kbd {
   stroke-width: 1.7;
 }
 
+.planned-row.is-paused .task-play {
+  background: transparent;
+  color: var(--muted);
+}
+
 .task-play:hover,
 .task-play:focus-visible,
-.planned-row.is-current .task-play {
+.planned-row.is-playing .task-play {
   background: var(--accent);
   color: var(--on-accent);
 }
