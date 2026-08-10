@@ -95,8 +95,8 @@ export function CaptureComposer({
             type="button"
           >
             <span aria-hidden="true">{mode === "planned" ? "Planned" : "Did"}</span>
-            <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
-              <path d="m6 7 2-2 2 2M8 5v8M14 13l-2 2-2-2M12 15V7" />
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+              <path d="m16 3 4 4-4 4m4-4H4m4 14-4-4 4-4m-4 4h16" />
             </svg>
           </button>
         </div>

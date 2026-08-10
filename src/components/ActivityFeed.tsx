@@ -39,6 +39,18 @@ function PlayIcon({ isPlaying }: { readonly isPlaying: boolean }) {
   );
 }
 
+function WorkLogSortIcon({ sort }: { readonly sort: WorkLogSort }) {
+  return sort === "newest" ? (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M15 12H3m0-7h18M9 19H3" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M3 19h18m-6-7H3m6-7H3" />
+    </svg>
+  );
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   if (target.closest("input, textarea, select") !== null) return true;
@@ -280,20 +292,15 @@ export function ActivityFeed({
         <header className="activity-group-header did-header">
           <h2 id="did-section-title">Did</h2>
           {workLog.length > 1 ? (
-            <label className="did-sort">
-              <span>Sort</span>
-              <select
-                aria-label="Sort completed work"
-                onChange={(event) => {
-                  const nextSort = event.target.value;
-                  if (nextSort === "newest" || nextSort === "oldest") setWorkLogSort(nextSort);
-                }}
-                value={workLogSort}
-              >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-              </select>
-            </label>
+            <button
+              aria-label={`Sort completed work. ${workLogSort === "newest" ? "Newest first" : "Oldest first"}. Switch to ${workLogSort === "newest" ? "oldest" : "newest"} first`}
+              className="did-sort"
+              onClick={() => setWorkLogSort(workLogSort === "newest" ? "oldest" : "newest")}
+              title={workLogSort === "newest" ? "Newest first" : "Oldest first"}
+              type="button"
+            >
+              <WorkLogSortIcon sort={workLogSort} />
+            </button>
           ) : null}
         </header>
 

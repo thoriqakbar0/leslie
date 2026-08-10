@@ -112,9 +112,11 @@ describe("ActivityFeed empty states", () => {
     const laterLog = { ...log, id: "log-two", note: "Sent the invoice.", createdAt: 400 };
     const html = renderFeed([], [log, laterLog]);
 
-    expect(html).toContain('aria-label="Sort completed work"');
-    expect(html).toContain(">Newest first</option>");
-    expect(html).toContain(">Oldest first</option>");
+    expect(html).toContain(
+      'aria-label="Sort completed work. Newest first. Switch to oldest first"',
+    );
+    expect(html).toContain('title="Newest first"');
+    expect(html).not.toContain("<select");
     expect(html).toContain('class="log-date"');
     expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
   });
