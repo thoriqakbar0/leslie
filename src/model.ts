@@ -27,6 +27,7 @@ export interface PlannedItem {
 export interface WorkLogEntry {
   readonly id: string;
   readonly note: string;
+  readonly notes: string;
   readonly createdAt: number;
 }
 
@@ -136,9 +137,24 @@ export function createInitialState(now = new Date()): LeslieState {
       },
     ],
     workLog: [
-      { id: "log-details", note: "Reviewed the invoice details.", createdAt: todayAt(now, 10, 42) },
-      { id: "log-template", note: "Opened the invoice template.", createdAt: todayAt(now, 10, 25) },
-      { id: "log-source", note: "Found the last invoice.", createdAt: todayAt(now, 9, 58) },
+      {
+        id: "log-details",
+        note: "Reviewed the invoice details.",
+        notes: "",
+        createdAt: todayAt(now, 10, 42),
+      },
+      {
+        id: "log-template",
+        note: "Opened the invoice template.",
+        notes: "",
+        createdAt: todayAt(now, 10, 25),
+      },
+      {
+        id: "log-source",
+        note: "Found the last invoice.",
+        notes: "",
+        createdAt: todayAt(now, 9, 58),
+      },
     ],
   };
 }

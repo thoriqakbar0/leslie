@@ -25,10 +25,10 @@ describe("Notes sidebar", () => {
   it("renders the editable note and close control", () => {
     const html = renderToStaticMarkup(
       createElement(NotesSidebar, {
+        entryTitle: "Send the invoice",
         notes: "Call Leslie tomorrow.",
         onClose: () => undefined,
         onNotesChange: () => undefined,
-        taskTitle: "Send the invoice",
       }),
     );
 

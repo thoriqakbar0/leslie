@@ -14,7 +14,8 @@ interface ActivityFeedProps {
   readonly workLog: readonly WorkLogEntry[];
   readonly onComplete: (id: string) => void;
   readonly onEstimateChange: (id: string, estimate: EstimateMinutes) => void;
-  readonly onOpenNotes: (id: string) => void;
+  readonly onOpenTaskNotes: (id: string) => void;
+  readonly onOpenWorkLogNotes: (id: string) => void;
   readonly onRemoveTask: (id: string) => void;
   readonly onRemoveWorkLog: (id: string) => void;
   readonly onTogglePlaying: (id: string) => void;
@@ -73,7 +74,8 @@ export function ActivityFeed({
   workLog,
   onComplete,
   onEstimateChange,
-  onOpenNotes,
+  onOpenTaskNotes,
+  onOpenWorkLogNotes,
   onRemoveTask,
   onRemoveWorkLog,
   onTogglePlaying,
@@ -90,7 +92,7 @@ export function ActivityFeed({
   );
 
   useEffect(() => {
-    function navigatePlannedTasks(event: KeyboardEvent) {
+    function navigateActivity(event: KeyboardEvent) {
       if (
         event.defaultPrevented ||
         event.isComposing ||
@@ -113,7 +115,7 @@ export function ActivityFeed({
       if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
 
       const cards = Array.from(
-        globalThis.document.querySelectorAll<HTMLElement>("[data-task-card]"),
+        globalThis.document.querySelectorAll<HTMLElement>("[data-activity-card]"),
       );
       const activeElement = globalThis.document.activeElement;
       const currentIndex = cards.findIndex(
@@ -124,7 +126,7 @@ export function ActivityFeed({
 
       const nextCard = cards[nextIndex];
       const nextTrigger = nextCard?.querySelector<HTMLButtonElement>(
-        "[data-task-navigation-target]",
+        "[data-activity-navigation-target]",
       );
       if (nextCard === undefined || nextTrigger === null || nextTrigger === undefined) return;
 
@@ -133,8 +135,8 @@ export function ActivityFeed({
       nextCard.scrollIntoView({ block: "nearest" });
     }
 
-    globalThis.document.addEventListener("keydown", navigatePlannedTasks);
-    return () => globalThis.document.removeEventListener("keydown", navigatePlannedTasks);
+    globalThis.document.addEventListener("keydown", navigateActivity);
+    return () => globalThis.document.removeEventListener("keydown", navigateActivity);
   }, []);
 
   if (tasks.length === 0 && workLog.length === 0) {
@@ -151,26 +153,20 @@ export function ActivityFeed({
   const rangeName = timeScale === "day" ? "day" : timeScale === "week" ? "week" : "month";
 
   return (
-    <section
-      aria-keyshortcuts={tasks.length > 0 ? "j k" : undefined}
-      aria-label="Activity"
-      className="activity-feed"
-    >
+    <section aria-keyshortcuts="j k" aria-label="Activity" className="activity-feed">
       <section aria-labelledby="planned-section-title" className="activity-group">
         <header className="activity-group-header">
           <h2 id="planned-section-title">Planned</h2>
-          {tasks.length > 0 ? (
-            <p id="task-navigation-hint">
+          {tasks.length + workLog.length > 0 ? (
+            <p id="activity-navigation-hint">
               <kbd>j</kbd>/<kbd>k</kbd> move <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
               opens notes
             </p>
           ) : null}
         </header>
-        {tasks.length > 0 ? (
-          <span className="visually-hidden" id="task-notes-action-hint">
-            Opens task notes.
-          </span>
-        ) : null}
+        <span className="visually-hidden" id="activity-notes-action-hint">
+          Opens notes for this activity.
+        </span>
 
         {tasks.length === 0 ? (
           <p className="activity-empty-note">No planned items in {activeListName}.</p>
@@ -198,7 +194,7 @@ export function ActivityFeed({
                       : "is-current is-paused"
                     : ""
                 }`}
-                data-task-card={task.id}
+                data-activity-card={`task:${task.id}`}
                 key={task.id}
               >
                 <button
@@ -210,11 +206,11 @@ export function ActivityFeed({
                 <div className="task-card-body">
                   <h3 className="task-title-line" id={titleId}>
                     <button
-                      aria-describedby={`${metadataId} task-notes-action-hint`}
+                      aria-describedby={`${metadataId} activity-notes-action-hint`}
                       className="task-notes-trigger"
-                      data-task-navigation-target=""
-                      data-task-notes-trigger={task.id}
-                      onClick={() => onOpenNotes(task.id)}
+                      data-activity-navigation-target=""
+                      data-notes-trigger={`task:${task.id}`}
+                      onClick={() => onOpenTaskNotes(task.id)}
                       type="button"
                     >
                       {visibleTitle}
@@ -300,16 +296,36 @@ export function ActivityFeed({
 
         {sortedWorkLog.map((entry) => {
           const labeledNote = parseEntryLabels(entry.note);
+          const visibleNote = labeledNote.text || "Untitled";
           const entryDate = new Date(entry.createdAt);
+          const titleId = `log-title-${entry.id}`;
+          const metadataId = `log-metadata-${entry.id}`;
           return (
-            <article className="activity-row log-row" key={entry.id}>
-              <time className="log-date" dateTime={entryDate.toISOString()}>
+            <article
+              aria-describedby={metadataId}
+              aria-labelledby={titleId}
+              className="activity-row log-row"
+              data-activity-card={`log:${entry.id}`}
+              key={entry.id}
+            >
+              <time className="log-date" dateTime={entryDate.toISOString()} id={metadataId}>
                 <span>{workLogDateFormatter.format(entryDate)}</span>
                 <strong>{formatCompactTime(entry.createdAt)}</strong>
               </time>
               <div className="activity-copy">
                 <span className="activity-kind">Did</span>
-                <p>{labeledNote.text || "Untitled"}</p>
+                <p id={titleId}>
+                  <button
+                    aria-describedby={`${metadataId} activity-notes-action-hint`}
+                    className="log-notes-trigger"
+                    data-activity-navigation-target=""
+                    data-notes-trigger={`log:${entry.id}`}
+                    onClick={() => onOpenWorkLogNotes(entry.id)}
+                    type="button"
+                  >
+                    {visibleNote}
+                  </button>
+                </p>
                 <EntryLabels labels={labeledNote.labels} />
               </div>
               <button

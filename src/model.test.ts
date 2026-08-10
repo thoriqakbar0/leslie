@@ -13,9 +13,9 @@ import {
 } from "./model";
 import type { WorkLogEntry } from "./model";
 
-const firstLog: WorkLogEntry = { id: "log-first", note: "First", createdAt: 100 };
-const secondLog: WorkLogEntry = { id: "log-second", note: "Second", createdAt: 200 };
-const thirdLog: WorkLogEntry = { id: "log-third", note: "Third", createdAt: 300 };
+const firstLog: WorkLogEntry = { id: "log-first", note: "First", notes: "", createdAt: 100 };
+const secondLog: WorkLogEntry = { id: "log-second", note: "Second", notes: "", createdAt: 200 };
+const thirdLog: WorkLogEntry = { id: "log-third", note: "Third", notes: "", createdAt: 300 };
 
 describe("planned input", () => {
   it("completes a trailing clock hour and selects its minutes", () => {

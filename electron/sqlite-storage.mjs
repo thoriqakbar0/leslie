@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { parseLeslieState } from "../shared/leslie-state.mjs";
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function schemaVersion(database) {
   const row = database.prepare("PRAGMA user_version").get();
@@ -15,6 +15,16 @@ function initializeSchema(database) {
     database.exec(`
       BEGIN IMMEDIATE;
       ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT '';
+      ALTER TABLE work_log ADD COLUMN notes TEXT NOT NULL DEFAULT '';
+      PRAGMA user_version = ${SCHEMA_VERSION};
+      COMMIT;
+    `);
+    return;
+  }
+  if (version === 2) {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      ALTER TABLE work_log ADD COLUMN notes TEXT NOT NULL DEFAULT '';
       PRAGMA user_version = ${SCHEMA_VERSION};
       COMMIT;
     `);
@@ -49,6 +59,7 @@ function initializeSchema(database) {
     CREATE TABLE work_log (
       id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
       note TEXT NOT NULL CHECK (length(trim(note)) > 0),
+      notes TEXT NOT NULL DEFAULT '',
       created_at INTEGER NOT NULL CHECK (created_at >= 0),
       position INTEGER NOT NULL UNIQUE CHECK (position >= 0)
     ) STRICT;
@@ -90,7 +101,7 @@ export function createLeslieDatabase(databasePath) {
     "INSERT INTO tasks (id, list_id, title, notes, estimated_minutes, created_at, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const insertWorkLog = database.prepare(
-    "INSERT INTO work_log (id, note, created_at, position) VALUES (?, ?, ?, ?)",
+    "INSERT INTO work_log (id, note, notes, created_at, position) VALUES (?, ?, ?, ?, ?)",
   );
   const insertAppState = database.prepare(
     "INSERT INTO app_state (singleton, active_list_id) VALUES (1, ?)",
@@ -133,9 +144,14 @@ export function createLeslieDatabase(databasePath) {
             scheduledAt: row.created_at,
           })),
         workLog: database
-          .prepare("SELECT id, note, created_at FROM work_log ORDER BY position")
+          .prepare("SELECT id, note, notes, created_at FROM work_log ORDER BY position")
           .all()
-          .map((row) => ({ id: row.id, note: row.note, createdAt: row.created_at })),
+          .map((row) => ({
+            id: row.id,
+            note: row.note,
+            notes: row.notes,
+            createdAt: row.created_at,
+          })),
       };
       const state = parseLeslieState(candidate);
       if (state === null) throw new Error("Leslie database contains invalid state");
@@ -165,7 +181,7 @@ export function createLeslieDatabase(databasePath) {
           ),
         );
         state.workLog.forEach((entry, position) =>
-          insertWorkLog.run(entry.id, entry.note, entry.createdAt, position),
+          insertWorkLog.run(entry.id, entry.note, entry.notes, entry.createdAt, position),
         );
         insertAppState.run(state.activeListId);
         database.exec("COMMIT");

@@ -1,10 +1,10 @@
 import { MarkdownNotesEditor } from "./MarkdownNotesEditor";
 
 interface NotesSidebarProps {
+  readonly entryTitle: string;
   readonly notes: string;
   readonly onClose: () => void;
   readonly onNotesChange: (notes: string) => void;
-  readonly taskTitle: string;
 }
 
 function CloseIcon() {
@@ -16,21 +16,21 @@ function CloseIcon() {
 }
 
 /** Render task notes as a markdown-backed rich-text editor. */
-export function NotesSidebar({ notes, onClose, onNotesChange, taskTitle }: NotesSidebarProps) {
+export function NotesSidebar({ entryTitle, notes, onClose, onNotesChange }: NotesSidebarProps) {
   return (
-    <aside aria-label={`Notes for ${taskTitle}`} className="notes-sidebar">
+    <aside aria-label={`Notes for ${entryTitle}`} className="notes-sidebar">
       <header className="notes-sidebar-header">
         <div>
           <h2>Notes</h2>
-          <p>{taskTitle}</p>
+          <p>{entryTitle}</p>
         </div>
-        <button aria-label={`Close notes for ${taskTitle}`} onClick={onClose} type="button">
+        <button aria-label={`Close notes for ${entryTitle}`} onClick={onClose} type="button">
           <CloseIcon />
         </button>
       </header>
       <div className="notes-editor">
         <MarkdownNotesEditor
-          ariaLabel={`Notes for ${taskTitle}`}
+          ariaLabel={`Notes for ${entryTitle}`}
           markdown={notes}
           onEscape={onClose}
           onMarkdownChange={onNotesChange}

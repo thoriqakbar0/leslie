@@ -47,8 +47,12 @@ function parseWorkLogEntry(value) {
   if (!isRecord(value)) return null;
   const id = parseNonEmptyString(value.id);
   const note = parseNonEmptyString(value.note);
+  const notes =
+    value.notes === undefined ? "" : typeof value.notes === "string" ? value.notes : null;
   const createdAt = parseTimestamp(value.createdAt);
-  return id === null || note === null || createdAt === null ? null : { id, note, createdAt };
+  return id === null || note === null || notes === null || createdAt === null
+    ? null
+    : { id, note, notes, createdAt };
 }
 
 function parseUniqueItems(values, parseItem) {

@@ -32,6 +32,10 @@ import { loadState, saveState } from "./storage";
 
 type DateMotionDirection = "next" | "previous" | "reset";
 
+type NotesTarget =
+  | { readonly kind: "task"; readonly id: string }
+  | { readonly kind: "log"; readonly id: string };
+
 type RemovedItem =
   | { readonly kind: "task"; readonly task: PlannedItem }
   | { readonly kind: "log"; readonly entry: WorkLogEntry }
@@ -64,7 +68,7 @@ function App() {
   const [anchorTimestamp, setAnchorTimestamp] = useState(() => Date.now());
   const [dateMotionDirection, setDateMotionDirection] = useState<DateMotionDirection>("reset");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [activeNotesTaskId, setActiveNotesTaskId] = useState<string | null>(null);
+  const [activeNotesTarget, setActiveNotesTarget] = useState<NotesTarget | null>(null);
   const [entryMode, setEntryMode] = useState<EntryMode>("did");
   const [playingTaskId, setPlayingTaskId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -184,10 +188,24 @@ function App() {
     () => document?.tasks.find((task) => task.id === playingTaskId) ?? null,
     [document, playingTaskId],
   );
-  const activeNotesTask = useMemo(
-    () => document?.tasks.find((task) => task.id === activeNotesTaskId) ?? null,
-    [activeNotesTaskId, document],
-  );
+  const activeNotesEntry = useMemo(() => {
+    if (!document || !activeNotesTarget) return null;
+    if (activeNotesTarget.kind === "task") {
+      const task = document.tasks.find((candidate) => candidate.id === activeNotesTarget.id);
+      return task
+        ? {
+            key: `task:${task.id}`,
+            title: task.title,
+            notes: task.notes,
+            target: activeNotesTarget,
+          }
+        : null;
+    }
+    const entry = document.workLog.find((candidate) => candidate.id === activeNotesTarget.id);
+    return entry
+      ? { key: `log:${entry.id}`, title: entry.note, notes: entry.notes, target: activeNotesTarget }
+      : null;
+  }, [activeNotesTarget, document]);
   const visibleWorkLog = useMemo(() => {
     if (!document) return [];
     const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
@@ -203,7 +221,7 @@ function App() {
   }
 
   function selectList(activeListId: string) {
-    setActiveNotesTaskId(null);
+    setActiveNotesTarget(null);
     setDocument((current) => (current ? { ...current, activeListId } : current));
   }
 
@@ -244,7 +262,12 @@ function App() {
     if (!nextActiveList) return;
     const removedTasks = current.tasks.filter((task) => task.listId === id);
     if (removedTasks.some((task) => task.id === playingTaskId)) stopPlaying();
-    if (removedTasks.some((task) => task.id === activeNotesTaskId)) setActiveNotesTaskId(null);
+    if (
+      activeNotesTarget?.kind === "task" &&
+      removedTasks.some((task) => task.id === activeNotesTarget.id)
+    ) {
+      setActiveNotesTarget(null);
+    }
     setRemovedItem({ kind: "list", list, tasks: removedTasks });
     setDocument({
       ...current,
@@ -281,7 +304,7 @@ function App() {
       current
         ? {
             ...current,
-            workLog: [{ id: createId("log"), note, createdAt }, ...current.workLog],
+            workLog: [{ id: createId("log"), note, notes: "", createdAt }, ...current.workLog],
           }
         : current,
     );
@@ -300,6 +323,7 @@ function App() {
           {
             id: createId("log"),
             note: `Completed ${task.title}.`,
+            notes: task.notes,
             createdAt,
           },
           ...current.workLog,
@@ -307,7 +331,9 @@ function App() {
       };
     });
     if (id === playingTaskId) stopPlaying();
-    if (id === activeNotesTaskId) setActiveNotesTaskId(null);
+    if (activeNotesTarget?.kind === "task" && id === activeNotesTarget.id) {
+      setActiveNotesTarget(null);
+    }
   }
 
   function changeEstimate(id: string, estimatedMinutes: EstimateMinutes) {
@@ -323,34 +349,39 @@ function App() {
     );
   }
 
-  function openTaskNotes(id: string) {
+  function openNotes(target: NotesTarget) {
     setIsDatePickerOpen(false);
-    setActiveNotesTaskId(id);
+    setActiveNotesTarget(target);
   }
 
-  function changeTaskNotes(id: string, notes: string) {
+  function changeNotes(target: NotesTarget, notes: string) {
     setDocument((current) =>
-      current
-        ? {
-            ...current,
-            tasks: current.tasks.map((task) =>
-              task.id === id && task.notes !== notes ? { ...task, notes } : task,
-            ),
-          }
-        : current,
+      !current
+        ? current
+        : target.kind === "task"
+          ? {
+              ...current,
+              tasks: current.tasks.map((task) =>
+                task.id === target.id && task.notes !== notes ? { ...task, notes } : task,
+              ),
+            }
+          : {
+              ...current,
+              workLog: current.workLog.map((entry) =>
+                entry.id === target.id && entry.notes !== notes ? { ...entry, notes } : entry,
+              ),
+            },
     );
   }
 
-  function closeTaskNotes() {
-    const taskId = activeNotesTaskId;
-    setActiveNotesTaskId(null);
-    if (taskId === null) return;
+  function closeNotes() {
+    const targetKey = activeNotesEntry?.key ?? null;
+    setActiveNotesTarget(null);
+    if (targetKey === null) return;
     globalThis.requestAnimationFrame(() => {
-      const triggers = globalThis.document.querySelectorAll<HTMLElement>(
-        "[data-task-notes-trigger]",
-      );
+      const triggers = globalThis.document.querySelectorAll<HTMLElement>("[data-notes-trigger]");
       for (const trigger of triggers) {
-        if (trigger.dataset.taskNotesTrigger !== taskId) continue;
+        if (trigger.dataset.notesTrigger !== targetKey) continue;
         trigger.focus();
         break;
       }
@@ -368,7 +399,9 @@ function App() {
       tasks: current.tasks.filter((candidate) => candidate.id !== id),
     });
     if (id === playingTaskId) stopPlaying();
-    if (id === activeNotesTaskId) setActiveNotesTaskId(null);
+    if (activeNotesTarget?.kind === "task" && id === activeNotesTarget.id) {
+      setActiveNotesTarget(null);
+    }
   }
 
   function togglePlaying(id: string) {
@@ -397,6 +430,9 @@ function App() {
       ...current,
       workLog: result.workLog,
     });
+    if (activeNotesTarget?.kind === "log" && id === activeNotesTarget.id) {
+      setActiveNotesTarget(null);
+    }
   }
 
   function undoRemove() {
@@ -581,7 +617,8 @@ function App() {
               isPlaying={isPlaying}
               onComplete={completeTask}
               onEstimateChange={changeEstimate}
-              onOpenNotes={openTaskNotes}
+              onOpenTaskNotes={(id) => openNotes({ kind: "task", id })}
+              onOpenWorkLogNotes={(id) => openNotes({ kind: "log", id })}
               onRemoveTask={removeTask}
               onRemoveWorkLog={removeWorkLog}
               onTogglePlaying={togglePlaying}
@@ -594,13 +631,13 @@ function App() {
         </div>
       </main>
 
-      {activeNotesTask ? (
+      {activeNotesEntry ? (
         <NotesSidebar
-          key={activeNotesTask.id}
-          notes={activeNotesTask.notes}
-          onClose={closeTaskNotes}
-          onNotesChange={(notes) => changeTaskNotes(activeNotesTask.id, notes)}
-          taskTitle={activeNotesTask.title}
+          entryTitle={activeNotesEntry.title}
+          key={activeNotesEntry.key}
+          notes={activeNotesEntry.notes}
+          onClose={closeNotes}
+          onNotesChange={(notes) => changeNotes(activeNotesEntry.target, notes)}
         />
       ) : null}
 

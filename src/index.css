@@ -1236,7 +1236,8 @@ kbd {
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 45%, var(--line));
 }
 
-.planned-row:has(.task-notes-trigger:focus-visible) {
+.planned-row:has(.task-notes-trigger:focus-visible),
+.log-row:has(.log-notes-trigger:focus-visible) {
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
@@ -1291,6 +1292,27 @@ kbd {
 }
 
 .task-notes-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+}
+
+.log-notes-trigger {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.log-notes-trigger:hover {
+  color: var(--accent);
+}
+
+.log-notes-trigger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 5px;
 }

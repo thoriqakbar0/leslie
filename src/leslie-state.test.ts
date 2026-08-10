@@ -14,7 +14,7 @@ const validState = {
       scheduledAt: 100,
     },
   ],
-  workLog: [{ id: "log-one", note: "Reviewed notes.", createdAt: 200 }],
+  workLog: [{ id: "log-one", note: "Reviewed notes.", notes: "Follow up.", createdAt: 200 }],
 };
 
 describe("Leslie state parser", () => {
@@ -61,6 +61,31 @@ describe("Leslie state parser", () => {
       parseLeslieState({
         ...validState,
         tasks: [{ ...validState.tasks[0], notes: 42 }],
+      }),
+    ).toBeNull();
+  });
+
+  it("preserves empty work-log notes and initializes absent work-log notes", () => {
+    expect(
+      parseLeslieState({
+        ...validState,
+        workLog: [{ ...validState.workLog[0], notes: "" }],
+      }),
+    ).toEqual({
+      ...validState,
+      workLog: [{ ...validState.workLog[0], notes: "" }],
+    });
+
+    const { notes: _notes, ...logWithoutNotes } = validState.workLog[0];
+    expect(parseLeslieState({ ...validState, workLog: [logWithoutNotes] })).toEqual({
+      ...validState,
+      workLog: [{ ...logWithoutNotes, notes: "" }],
+    });
+
+    expect(
+      parseLeslieState({
+        ...validState,
+        workLog: [{ ...validState.workLog[0], notes: 42 }],
       }),
     ).toBeNull();
   });

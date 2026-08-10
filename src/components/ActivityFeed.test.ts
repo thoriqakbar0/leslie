@@ -16,6 +16,7 @@ const task: PlannedItem = {
 const log: WorkLogEntry = {
   id: "log-one",
   note: "Reviewed the invoice.",
+  notes: "Follow up tomorrow.",
   createdAt: 200,
 };
 
@@ -37,7 +38,8 @@ function renderFeed(
       workLog,
       onComplete: () => undefined,
       onEstimateChange: () => undefined,
-      onOpenNotes: () => undefined,
+      onOpenTaskNotes: () => undefined,
+      onOpenWorkLogNotes: () => undefined,
       onRemoveTask: () => undefined,
       onRemoveWorkLog: () => undefined,
       onTogglePlaying: () => undefined,
@@ -71,11 +73,12 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('aria-label="Playback for Send the invoice"');
     expect(html).toContain('aria-describedby="task-metadata-task-one playback-action-hint"');
     expect(html).toContain("Press to switch between playing and paused.");
-    expect(html).toContain("Opens task notes.");
-    expect(html).toContain('aria-describedby="task-metadata-task-one task-notes-action-hint"');
+    expect(html).toContain("Opens notes for this activity.");
+    expect(html).toContain('aria-describedby="task-metadata-task-one activity-notes-action-hint"');
     expect(html).toContain('aria-keyshortcuts="j k"');
-    expect(html).toContain('data-task-card="task-one"');
-    expect(html).toContain('data-task-navigation-target=""');
+    expect(html).toContain('data-activity-card="task:task-one"');
+    expect(html).toContain('data-activity-navigation-target=""');
+    expect(html).toContain('data-notes-trigger="task:task-one"');
     expect(html).toContain('aria-labelledby="task-title-task-one"');
     expect(html).toContain('aria-describedby="task-metadata-task-one"');
     expect(html).toContain('<h2 id="planned-section-title">Planned</h2>');
@@ -119,5 +122,17 @@ describe("ActivityFeed empty states", () => {
     expect(html).not.toContain("<select");
     expect(html).toContain('class="log-date"');
     expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
+  });
+
+  it("makes completed work part of keyboard notes navigation", () => {
+    const html = renderFeed([], [log]);
+
+    expect(html).toContain('aria-keyshortcuts="j k"');
+    expect(html).toContain('data-activity-card="log:log-one"');
+    expect(html).toContain('data-activity-navigation-target=""');
+    expect(html).toContain('data-notes-trigger="log:log-one"');
+    expect(html).toContain('aria-describedby="log-metadata-log-one activity-notes-action-hint"');
+    expect(html).toContain('id="log-title-log-one"');
+    expect(html).toContain(">Reviewed the invoice.</button>");
   });
 });
