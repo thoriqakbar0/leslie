@@ -833,15 +833,16 @@ body:has(.notes-sidebar) {
   align-items: center;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 13px;
   background: var(--capture-surface);
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--shadow-popover) 18%, transparent);
+  transition-property: border-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
 }
 
 .capture-box.planned {
-  grid-template-columns: auto minmax(0, 1fr) 92px 76px;
+  grid-template-columns: auto minmax(0, 1fr) 106px 86px;
 }
 
 .capture-box:focus-within {
@@ -870,7 +871,20 @@ body:has(.notes-sidebar) {
   background: var(--selected);
   color: var(--accent);
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition-property: scale, background-color, color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.entry-mode-switch:hover {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--shadow-popover) 20%, transparent);
+}
+
+.entry-mode-switch:active {
+  scale: 0.96;
 }
 
 .entry-mode-switch svg {
@@ -896,28 +910,50 @@ body:has(.notes-sidebar) {
 
 .capture-box select {
   width: 92px;
+  height: 42px;
+  padding-inline: 12px;
   border: 0;
+  border-radius: 6px;
   outline: 0;
-  background: transparent;
+  background: var(--selected);
   color: var(--muted);
   font-size: 13px;
   cursor: pointer;
+  transition-property: background-color, color;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.capture-box select:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
 }
 
 .capture-submit {
-  align-self: stretch;
+  align-self: center;
   min-width: 72px;
+  height: 56px;
+  margin-inline-end: 7px;
   padding: 0 18px;
   border: 0;
-  border-left: 1px solid var(--line);
-  background: transparent;
-  color: var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition-property: scale, background-color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
 }
 
 .capture-submit:hover {
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--accent) 88%, var(--ink));
+  box-shadow: 0 4px 9px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.capture-submit:active {
+  scale: 0.96;
 }
 
 .capture-hint {
