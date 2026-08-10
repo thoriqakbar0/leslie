@@ -1,0 +1,45 @@
+{
+  "name": "leslie",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "dev": "concurrently -k \"vp dev --host 127.0.0.1 --port 5175 --strictPort\" \"wait-on http-get://127.0.0.1:5175 && LESLIE_RENDERER_URL=http://127.0.0.1:5175 electron electron/main.mjs\"",
+    "dev:web": "vp dev",
+    "build": "tsc -b && vp build",
+    "check": "vp check",
+    "lint": "vp lint",
+    "preview": "vp preview",
+    "start": "electron electron/main.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "agentation": "^3.0.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "concurrently": "^10.0.4",
+    "electron": "^43.3.0",
+    "typescript": "~6.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8",
+    "vite-plus": "0.2.8",
+    "wait-on": "^9.1.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.8"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "12.0.2",
+      "onFail": "download"
+    }
+  }
+}
