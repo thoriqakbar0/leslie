@@ -1,5 +1,5 @@
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
-import { INSERT_CHECK_LIST_COMMAND } from "@lexical/list";
+import { $getListDepth, $isListItemNode, $isListNode } from "@lexical/list";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -13,9 +13,13 @@ import {
   $getSelection,
   $isRangeSelection,
   BLUR_COMMAND,
+  COMMAND_PRIORITY_EDITOR,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
+  INDENT_CONTENT_COMMAND,
   KEY_ESCAPE_COMMAND,
+  KEY_TAB_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
   PASTE_COMMAND,
 } from "lexical";
 import { useCallback, useEffect, useRef } from "react";
@@ -41,26 +45,40 @@ interface PersistencePluginProps {
   readonly onMarkdownChange: (markdown: string) => void;
 }
 
-function NotesToolbarPlugin() {
+function ChecklistIndentPlugin() {
   const [editor] = useLexicalComposerContext();
 
-  return (
-    <p className="notes-format-hint">
-      <kbd>-</kbd> list <span aria-hidden="true">·</span>{" "}
-      <button
-        aria-label="Insert checklist"
-        className="notes-checklist-button"
-        onClick={() => {
-          editor.focus(() => editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined));
-        }}
-        type="button"
-      >
-        <span aria-hidden="true" className="notes-checkbox-icon" />
-        checklist
-      </button>{" "}
-      <span aria-hidden="true">·</span> <kbd>#</kbd> heading
-    </p>
+  useEffect(
+    () =>
+      editor.registerCommand(
+        KEY_TAB_COMMAND,
+        (event) => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+          let node = selection.anchor.getNode();
+          while (!$isListItemNode(node)) {
+            const parent = node.getParent();
+            if (parent === null) return false;
+            node = parent;
+          }
+          const list = node.getParent();
+          if (!$isListNode(list)) return false;
+          if (!event.shiftKey && (node.getPreviousSibling() === null || $getListDepth(list) >= 4)) {
+            return false;
+          }
+
+          event.preventDefault();
+          return editor.dispatchCommand(
+            event.shiftKey ? OUTDENT_CONTENT_COMMAND : INDENT_CONTENT_COMMAND,
+            undefined,
+          );
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
+    [editor],
   );
+
+  return null;
 }
 
 function PersistencePlugin({
@@ -162,11 +180,13 @@ export function MarkdownNotesEditor({
             checklist: "rich-checklist",
             listitemChecked: "rich-checklist-item is-checked",
             listitemUnchecked: "rich-checklist-item",
+            nested: {
+              listitem: "rich-checklist-nested-item",
+            },
           },
         },
       }}
     >
-      <NotesToolbarPlugin />
       <div className="notes-editor-surface">
         <RichTextPlugin
           contentEditable={
@@ -185,6 +205,7 @@ export function MarkdownNotesEditor({
       <HistoryPlugin />
       <ListPlugin />
       <CheckListPlugin />
+      <ChecklistIndentPlugin />
       <MarkdownShortcutPlugin transformers={NOTES_MARKDOWN_TRANSFORMERS} />
       <PersistencePlugin
         initialMarkdown={markdown}

@@ -37,12 +37,8 @@ describe("Notes sidebar", () => {
     expect(html).toContain('id="notes-rich-editor"');
     expect(html).toContain('contentEditable="true"');
     expect(html).toContain("Write notes…");
-    expect(html).toContain('aria-label="Insert checklist"');
-    expect(html).toContain('class="notes-checkbox-icon"');
+    expect(html).not.toContain('class="notes-format-hint"');
     expect(html).toContain("Send the invoice");
-    expect(html.indexOf('class="notes-format-hint"')).toBeLessThan(
-      html.indexOf('id="notes-rich-editor"'),
-    );
   });
 
   it("round-trips the supported rich-text syntax as markdown", () => {
@@ -61,5 +57,11 @@ describe("Notes sidebar", () => {
 
   it("accepts the compact checklist shortcut shown in the editor", () => {
     expect(roundTripMarkdown("- [] follow up")).toBe("- [ ] follow up");
+  });
+
+  it("preserves nested checklist indentation in markdown", () => {
+    const markdown = "- [ ] parent\n    - [ ] child";
+
+    expect(roundTripMarkdown(markdown)).toBe(markdown);
   });
 });
