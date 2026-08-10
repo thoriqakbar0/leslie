@@ -139,27 +139,6 @@ function App() {
     };
   }, [document]);
 
-  useEffect(() => {
-    function switchEntryMode(event: KeyboardEvent) {
-      if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey) return;
-
-      const target = event.target;
-      const isInsideLeslie =
-        target === globalThis.document.body ||
-        target === globalThis.document.documentElement ||
-        (target instanceof Element && target.closest(".leslie-app") !== null);
-      if (!isInsideLeslie) return;
-
-      event.preventDefault();
-      setIsDatePickerOpen(false);
-      setEntryMode((current) => (current === "did" ? "planned" : "did"));
-      captureInputRef.current?.focus();
-    }
-
-    globalThis.document.addEventListener("keydown", switchEntryMode);
-    return () => globalThis.document.removeEventListener("keydown", switchEntryMode);
-  }, []);
-
   const visibleTasks = useMemo(
     () =>
       document === null
@@ -440,7 +419,10 @@ function App() {
   const scaleLabel = timeScale;
 
   return (
-    <main className="leslie-app">
+    <div className="leslie-app">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <Sidebar
         activeListId={document.activeListId}
         lists={document.lists}
@@ -450,7 +432,12 @@ function App() {
         onSelectList={selectList}
       />
 
-      <div className="workspace">
+      <main
+        aria-labelledby="workspace-heading"
+        className="workspace"
+        id="main-content"
+        tabIndex={-1}
+      >
         <PlaybackBar
           elapsedSeconds={elapsedSeconds}
           isPlaying={isPlaying}
@@ -462,6 +449,9 @@ function App() {
         />
         <div className="workspace-content">
           <header className="page-header">
+            <h1 className="visually-hidden" id="workspace-heading">
+              {timeScaleHeading(timeScale, new Date(anchorTimestamp))} activity
+            </h1>
             <label className="visually-hidden" htmlFor="time-scale">
               Time scale
             </label>
@@ -565,7 +555,7 @@ function App() {
             />
           </div>
         </div>
-      </div>
+      </main>
 
       {activeNotesTask ? (
         <NotesSidebar
@@ -593,7 +583,7 @@ function App() {
           Changes cannot be saved on this device.
         </p>
       ) : null}
-    </main>
+    </div>
   );
 }
 

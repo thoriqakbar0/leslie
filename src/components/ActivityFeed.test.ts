@@ -19,12 +19,19 @@ const log: WorkLogEntry = {
   createdAt: 200,
 };
 
-function renderFeed(tasks: readonly PlannedItem[], workLog: readonly WorkLogEntry[]) {
+function renderFeed(
+  tasks: readonly PlannedItem[],
+  workLog: readonly WorkLogEntry[],
+  playback: { readonly isPlaying: boolean; readonly playingTaskId: string | null } = {
+    isPlaying: false,
+    playingTaskId: null,
+  },
+) {
   return renderToStaticMarkup(
     createElement(ActivityFeed, {
       activeListName: "Inbox",
-      isPlaying: false,
-      playingTaskId: null,
+      isPlaying: playback.isPlaying,
+      playingTaskId: playback.playingTaskId,
       tasks,
       timeScale: "day",
       workLog,
@@ -62,7 +69,27 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain("Planned");
     expect(html).toContain("14:00</time>");
     expect(html).toContain('aria-label="Play Send the invoice"');
-    expect(html).toContain('aria-label="Open notes for Send the invoice"');
+    expect(html).toContain("Opens task notes.");
+    expect(html).toContain('aria-describedby="task-metadata-task-one task-notes-action-hint"');
+    expect(html).toContain('aria-keyshortcuts="j k"');
+    expect(html).toContain('data-task-card="task-one"');
+    expect(html).toContain('data-task-navigation-target=""');
+    expect(html).toContain('aria-labelledby="task-title-task-one"');
+    expect(html).toContain('aria-describedby="task-metadata-task-one"');
+    expect(html).toContain('<h2 id="planned-section-title">Planned</h2>');
+    expect(html).toContain('<h2 id="did-section-title">Did</h2>');
+    expect(html).toContain('<h3 class="task-title-line" id="task-title-task-one">');
+    expect(html).toContain(">Send the invoice</button>");
+    expect(html).toContain("Expected<span");
+    expect(html).toContain("<kbd>j</kbd>/<kbd>k</kbd> move");
     expect(html).not.toContain(">Notes</button>");
+  });
+
+  it("announces the active task state with text", () => {
+    const html = renderFeed([task], [], { isPlaying: true, playingTaskId: task.id });
+
+    expect(html).toContain("Working now");
+    expect(html).toContain('aria-label="Pause Send the invoice"');
+    expect(html).toContain('aria-pressed="true"');
   });
 });

@@ -51,11 +51,30 @@ button {
 }
 
 .leslie-app {
+  position: relative;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
   background: var(--paper);
   color: var(--ink);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 20;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: white;
+  font-size: 14px;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 20px));
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .sidebar {
@@ -843,6 +862,34 @@ kbd {
   border-bottom: 1px solid var(--line);
 }
 
+.activity-group + .activity-group {
+  border-top: 1px solid var(--line);
+}
+
+.activity-group-header {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.activity-group-header h2 {
+  margin: 0;
+  font: 500 18px/1.2 var(--serif);
+}
+
+.activity-group-header p {
+  margin: 0;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.activity-group-header-simple {
+  justify-content: flex-start;
+}
+
 .activity-feed-empty {
   border-bottom: 1px solid var(--line);
 }
@@ -895,7 +942,17 @@ kbd {
 }
 
 .planned-row {
-  grid-template-columns: 38px minmax(0, 1fr) 92px 36px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  padding-block: 14px;
+}
+
+.planned-row.is-current {
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.planned-row:has(.task-notes-trigger:focus-visible) {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
 .log-row {
@@ -924,13 +981,6 @@ kbd {
   min-width: 0;
 }
 
-.planned-row .activity-copy {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 9px;
-}
-
 .activity-copy strong {
   display: block;
   overflow: hidden;
@@ -946,6 +996,7 @@ kbd {
   border-radius: 4px;
   background: transparent;
   color: inherit;
+  font: 500 20px/1.25 var(--serif);
   text-align: left;
   cursor: pointer;
 }
@@ -955,23 +1006,67 @@ kbd {
   outline-offset: 5px;
 }
 
-.task-title-line,
-.task-title-line strong {
+.task-card-body,
+.task-title-line {
   display: block;
   min-width: 0;
 }
 
+.task-title-line {
+  margin: 0;
+}
+
+.task-card-details {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  margin-top: 5px;
+}
+
+.task-card-metadata {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.task-card-metadata .activity-kind {
+  display: inline;
+  margin: 0;
+}
+
+.task-card-metadata time {
+  font-variant-numeric: tabular-nums;
+}
+
+.task-card-estimate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.task-card-estimate-label {
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.task-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .task-play {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   flex: none;
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent);
-  opacity: 0;
-  transform: scale(0.9);
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
 }
 
 .task-play svg {
@@ -982,13 +1077,6 @@ kbd {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.7;
-}
-
-.planned-row:hover .task-play,
-.planned-row:focus-within .task-play,
-.planned-row.is-current .task-play {
-  opacity: 1;
-  transform: scale(1);
 }
 
 .task-play:hover,
@@ -1028,13 +1116,14 @@ kbd {
 }
 
 .estimate-select {
-  width: 92px;
+  width: 70px;
+  padding: 0 12px 0 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--muted);
   font-size: 13px;
-  text-align: right;
+  text-align: left;
   cursor: pointer;
 }
 
@@ -1321,7 +1410,7 @@ input:focus-visible {
   }
 
   .planned-row {
-    grid-template-columns: 34px minmax(0, 1fr) 72px 32px;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
     gap: 12px;
   }
 

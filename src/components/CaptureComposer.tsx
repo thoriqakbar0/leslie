@@ -72,7 +72,6 @@ export function CaptureComposer({
             aria-pressed={mode === "did"}
             className={mode === "did" ? "active" : ""}
             onClick={() => onModeChange("did")}
-            onFocus={() => onModeChange("did")}
             type="button"
           >
             Did
@@ -81,7 +80,6 @@ export function CaptureComposer({
             aria-pressed={mode === "planned"}
             className={mode === "planned" ? "active" : ""}
             onClick={() => onModeChange("planned")}
-            onFocus={() => onModeChange("planned")}
             type="button"
           >
             Planned
@@ -143,8 +141,8 @@ export function CaptureComposer({
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>tab</kbd> switches Did/Planned <span aria-hidden="true">·</span> <kbd>enter</kbd> adds
-        it
+        <kbd>tab</kbd> moves through controls <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
+        adds it
         {mode === "planned" ? (
           <>
             {" "}
