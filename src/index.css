@@ -464,7 +464,7 @@ body:has(.notes-sidebar) {
 
 .time-support .live-clock {
   position: relative;
-  top: 16px;
+  top: 6px;
   font-size: 18px;
 }
 
