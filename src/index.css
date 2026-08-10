@@ -270,6 +270,10 @@ button {
   padding-bottom: 72px;
 }
 
+.workspace:focus {
+  outline: 0;
+}
+
 .workspace-content {
   padding: 44px clamp(34px, 6vw, 88px) 0;
 }

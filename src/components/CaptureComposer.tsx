@@ -167,7 +167,7 @@ export function CaptureComposer({
         </label>
         <input
           aria-describedby="capture-hint"
-          aria-keyshortcuts="C"
+          aria-keyshortcuts="C Escape"
           autoFocus
           autoComplete="off"
           id="capture-input"
@@ -184,6 +184,17 @@ export function CaptureComposer({
               setEstimatedMinutes(
                 parsePlannedDuration(completedText, estimatedMinutes).estimatedMinutes,
               );
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            event.preventDefault();
+            event.stopPropagation();
+            const workspace = globalThis.document.getElementById("main-content");
+            if (workspace instanceof HTMLElement) {
+              workspace.focus({ preventScroll: true });
+            } else {
+              event.currentTarget.blur();
             }
           }}
           placeholder={mode === "did" ? "e.g. Reviewed the invoice…" : "e.g. Call at 8:30…"}
@@ -219,7 +230,9 @@ export function CaptureComposer({
         </button>
       </form>
       <p className="capture-hint" id="capture-hint">
-        <kbd>c</kbd> focuses quick add <span aria-hidden="true">·</span> <kbd>enter</kbd> adds it
+        <kbd>c</kbd> focus <span aria-hidden="true">·</span> <kbd>esc</kbd> unfocus
+        <span aria-hidden="true"> · </span>
+        <kbd>enter</kbd> add
         <span aria-hidden="true"> · </span>
         <kbd>⌘⇧M</kbd> switches entry type
         {mode === "planned" ? (
