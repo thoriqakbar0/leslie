@@ -1,7 +1,25 @@
 import { DatabaseSync } from "node:sqlite";
 import { parseLeslieState } from "../shared/leslie-state.mjs";
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
+
+const HISTORY_SCHEMA = `
+  CREATE TABLE history (
+    id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
+    type TEXT NOT NULL CHECK (type IN ('planned-created', 'did-created', 'title-changed', 'planned-completed')),
+    item_id TEXT NOT NULL CHECK (length(trim(item_id)) > 0),
+    item_kind TEXT CHECK (item_kind IN ('planned', 'did')),
+    title TEXT NOT NULL CHECK (length(trim(title)) > 0),
+    previous_title TEXT,
+    occurred_at INTEGER NOT NULL CHECK (occurred_at >= 0),
+    position INTEGER NOT NULL UNIQUE CHECK (position >= 0),
+    CHECK (
+      (type = 'title-changed' AND item_kind IS NOT NULL AND length(trim(previous_title)) > 0)
+      OR
+      (type != 'title-changed' AND item_kind IS NULL AND previous_title IS NULL)
+    )
+  ) STRICT;
+`;
 
 function schemaVersion(database) {
   const row = database.prepare("PRAGMA user_version").get();
@@ -11,20 +29,16 @@ function schemaVersion(database) {
 function initializeSchema(database) {
   const version = schemaVersion(database);
   if (version === SCHEMA_VERSION) return;
-  if (version === 1) {
+  if (version === 1 || version === 2 || version === 3) {
+    const addTaskNotes =
+      version === 1 ? "ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT '';" : "";
+    const addWorkLogNotes =
+      version <= 2 ? "ALTER TABLE work_log ADD COLUMN notes TEXT NOT NULL DEFAULT '';" : "";
     database.exec(`
       BEGIN IMMEDIATE;
-      ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT '';
-      ALTER TABLE work_log ADD COLUMN notes TEXT NOT NULL DEFAULT '';
-      PRAGMA user_version = ${SCHEMA_VERSION};
-      COMMIT;
-    `);
-    return;
-  }
-  if (version === 2) {
-    database.exec(`
-      BEGIN IMMEDIATE;
-      ALTER TABLE work_log ADD COLUMN notes TEXT NOT NULL DEFAULT '';
+      ${addTaskNotes}
+      ${addWorkLogNotes}
+      ${HISTORY_SCHEMA}
       PRAGMA user_version = ${SCHEMA_VERSION};
       COMMIT;
     `);
@@ -63,6 +77,8 @@ function initializeSchema(database) {
       created_at INTEGER NOT NULL CHECK (created_at >= 0),
       position INTEGER NOT NULL UNIQUE CHECK (position >= 0)
     ) STRICT;
+
+    ${HISTORY_SCHEMA}
 
     PRAGMA user_version = ${SCHEMA_VERSION};
     COMMIT;
@@ -106,6 +122,9 @@ export function createLeslieDatabase(databasePath) {
   const insertAppState = database.prepare(
     "INSERT INTO app_state (singleton, active_list_id) VALUES (1, ?)",
   );
+  const insertHistory = database.prepare(
+    "INSERT INTO history (id, type, item_id, item_kind, title, previous_title, occurred_at, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  );
   let isClosed = false;
 
   return Object.freeze({
@@ -117,7 +136,7 @@ export function createLeslieDatabase(databasePath) {
       if (activeState === undefined) {
         const row = database
           .prepare(
-            "SELECT (SELECT count(*) FROM lists) + (SELECT count(*) FROM tasks) + (SELECT count(*) FROM work_log) AS row_count",
+            "SELECT (SELECT count(*) FROM lists) + (SELECT count(*) FROM tasks) + (SELECT count(*) FROM work_log) + (SELECT count(*) FROM history) AS row_count",
           )
           .get();
         if (row?.row_count === 0) return null;
@@ -152,6 +171,30 @@ export function createLeslieDatabase(databasePath) {
             notes: row.notes,
             createdAt: row.created_at,
           })),
+        history: database
+          .prepare(
+            "SELECT id, type, item_id, item_kind, title, previous_title, occurred_at FROM history ORDER BY position",
+          )
+          .all()
+          .map((row) =>
+            row.type === "title-changed"
+              ? {
+                  id: row.id,
+                  itemId: row.item_id,
+                  itemKind: row.item_kind,
+                  type: row.type,
+                  previousTitle: row.previous_title,
+                  title: row.title,
+                  occurredAt: row.occurred_at,
+                }
+              : {
+                  id: row.id,
+                  itemId: row.item_id,
+                  type: row.type,
+                  title: row.title,
+                  occurredAt: row.occurred_at,
+                },
+          ),
       };
       const state = parseLeslieState(candidate);
       if (state === null) throw new Error("Leslie database contains invalid state");
@@ -166,7 +209,7 @@ export function createLeslieDatabase(databasePath) {
       database.exec("BEGIN IMMEDIATE");
       try {
         database.exec(
-          "DELETE FROM tasks; DELETE FROM work_log; DELETE FROM app_state; DELETE FROM lists;",
+          "DELETE FROM history; DELETE FROM tasks; DELETE FROM work_log; DELETE FROM app_state; DELETE FROM lists;",
         );
         state.lists.forEach((list, position) => insertList.run(list.id, list.name, position));
         state.tasks.forEach((task, position) =>
@@ -182,6 +225,18 @@ export function createLeslieDatabase(databasePath) {
         );
         state.workLog.forEach((entry, position) =>
           insertWorkLog.run(entry.id, entry.note, entry.notes, entry.createdAt, position),
+        );
+        state.history.forEach((entry, position) =>
+          insertHistory.run(
+            entry.id,
+            entry.type,
+            entry.itemId,
+            entry.type === "title-changed" ? entry.itemKind : null,
+            entry.title,
+            entry.type === "title-changed" ? entry.previousTitle : null,
+            entry.occurredAt,
+            position,
+          ),
         );
         insertAppState.run(state.activeListId);
         database.exec("COMMIT");

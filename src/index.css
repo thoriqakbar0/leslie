@@ -582,40 +582,6 @@ body:has(.notes-sidebar) {
   font-size: 18px;
 }
 
-.renderer-refresh {
-  position: absolute;
-  z-index: 2;
-  top: 10px;
-  right: 15px;
-  width: 60px;
-  height: 60px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.renderer-refresh:hover,
-.renderer-refresh:focus-visible {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: color-mix(in srgb, var(--accent) 7%, transparent);
-  color: var(--accent);
-}
-
-.renderer-refresh svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
-}
-
 .playback-bar {
   min-height: 124px;
   display: grid;
@@ -733,15 +699,7 @@ body:has(.notes-sidebar) {
 
 .date-navigation {
   width: 100%;
-  min-height: 46px;
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px;
-  align-items: center;
-  gap: 8px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--capture-surface);
+  min-height: 36px;
 }
 
 .date-navigation-wrap {
@@ -751,7 +709,7 @@ body:has(.notes-sidebar) {
 }
 
 .date-navigation .current-date {
-  width: auto;
+  width: 100%;
   min-width: 0;
   height: 36px;
   display: block;
@@ -776,32 +734,9 @@ body:has(.notes-sidebar) {
   white-space: nowrap;
 }
 
-.date-navigation button {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-
 .date-navigation button:hover {
   background: var(--selected);
   color: var(--accent);
-}
-
-.date-navigation svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
 }
 
 .date-picker {
@@ -969,22 +904,23 @@ body:has(.notes-sidebar) {
   z-index: 1;
   grid-column: 1;
   grid-row: 1;
-  align-self: center;
+  align-self: stretch;
   display: flex;
   align-items: center;
-  padding-inline-start: 10px;
+  padding: 0;
 }
 
 .entry-mode-switch {
+  width: 100%;
   min-width: 76px;
-  height: 34px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding-inline: 10px;
+  padding-inline: 15px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px 0 0 12px;
   background: transparent;
   color: var(--muted);
   font-size: 12px;
@@ -1098,6 +1034,93 @@ kbd {
 
 .activity-group + .activity-group {
   border-top: 1px solid var(--line);
+}
+
+.history-panel + .activity-group {
+  border-top: 1px solid var(--line);
+}
+
+.history-panel {
+  width: min(100%, 564px);
+  min-height: 178px;
+  margin: 20px auto 28px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--selected) 62%, transparent);
+}
+
+.history-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.history-panel-header h2 {
+  margin: 0;
+  font: 500 17px/1.2 var(--serif);
+}
+
+.history-panel-header span {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.history-timeline {
+  max-height: 116px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.history-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.history-timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 10px;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.history-marker {
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.history-timeline p,
+.history-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.history-timeline time {
+  display: block;
+  margin-top: 2px;
+  color: var(--faint);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-empty {
+  padding-top: 20px;
+  text-align: center;
 }
 
 .activity-group-header {

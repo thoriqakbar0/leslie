@@ -20,6 +20,7 @@ import {
   timestampOnDate,
 } from "./model";
 import type {
+  ActivityHistoryEntry,
   EntryMode,
   EstimateMinutes,
   LeslieState,
@@ -43,22 +44,6 @@ type RemovedItem =
 
 function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
-}
-
-function ScaleArrow({ direction }: { readonly direction: "next" | "previous" }) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20">
-      <path d={direction === "previous" ? "M12.5 4.5 7 10l5.5 5.5" : "m7.5 4.5 5.5 5.5-5.5 5.5"} />
-    </svg>
-  );
-}
-
-function RefreshIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20">
-      <path d="M15.4 7.2A6 6 0 1 0 16 10M15.4 7.2V3.8M15.4 7.2H12" />
-    </svg>
-  );
 }
 
 /** Compose Leslie's persistent list and work-log interface. */
@@ -211,6 +196,11 @@ function App() {
     const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
     return document.workLog.filter((entry) => entry.createdAt >= start && entry.createdAt < end);
   }, [anchorTimestamp, document, timeScale]);
+  const visibleHistory = useMemo(() => {
+    if (!document) return [];
+    const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
+    return document.history.filter((entry) => entry.occurredAt >= start && entry.occurredAt < end);
+  }, [anchorTimestamp, document, timeScale]);
 
   if (document === null) {
     return (
@@ -278,13 +268,21 @@ function App() {
   }
 
   function addPlanned(title: string, estimatedMinutes: EstimateMinutes, scheduledAt: number) {
+    const taskId = createId("task");
+    const historyEntry: ActivityHistoryEntry = {
+      id: createId("history"),
+      itemId: taskId,
+      type: "planned-created",
+      title,
+      occurredAt: Date.now(),
+    };
     setDocument((current) =>
       current
         ? {
             ...current,
             tasks: [
               {
-                id: createId("task"),
+                id: taskId,
                 listId: current.activeListId,
                 title,
                 notes: "",
@@ -293,6 +291,7 @@ function App() {
               },
               ...current.tasks,
             ],
+            history: [historyEntry, ...current.history],
           }
         : current,
     );
@@ -300,11 +299,20 @@ function App() {
 
   function addWorkLog(note: string) {
     const createdAt = timestampOnDate(new Date(anchorTimestamp));
+    const logId = createId("log");
+    const historyEntry: ActivityHistoryEntry = {
+      id: createId("history"),
+      itemId: logId,
+      type: "did-created",
+      title: note,
+      occurredAt: Date.now(),
+    };
     setDocument((current) =>
       current
         ? {
             ...current,
-            workLog: [{ id: createId("log"), note, notes: "", createdAt }, ...current.workLog],
+            workLog: [{ id: logId, note, notes: "", createdAt }, ...current.workLog],
+            history: [historyEntry, ...current.history],
           }
         : current,
     );
@@ -312,6 +320,8 @@ function App() {
 
   function completeTask(id: string) {
     const createdAt = timestampOnDate(new Date(anchorTimestamp));
+    const historyId = createId("history");
+    const occurredAt = Date.now();
     setDocument((current) => {
       if (!current) return current;
       const task = current.tasks.find((candidate) => candidate.id === id);
@@ -327,6 +337,16 @@ function App() {
             createdAt,
           },
           ...current.workLog,
+        ],
+        history: [
+          {
+            id: historyId,
+            itemId: task.id,
+            type: "planned-completed",
+            title: task.title,
+            occurredAt,
+          },
+          ...current.history,
         ],
       };
     });
@@ -350,29 +370,59 @@ function App() {
   }
 
   function changeTaskTitle(id: string, title: string) {
-    setDocument((current) =>
-      current
-        ? {
-            ...current,
-            tasks: current.tasks.map((task) =>
-              task.id === id && task.title !== title ? { ...task, title } : task,
-            ),
-          }
-        : current,
-    );
+    const historyId = createId("history");
+    const occurredAt = Date.now();
+    setDocument((current) => {
+      if (!current) return current;
+      const task = current.tasks.find((candidate) => candidate.id === id);
+      if (!task || task.title === title) return current;
+      return {
+        ...current,
+        tasks: current.tasks.map((candidate) =>
+          candidate.id === id ? { ...candidate, title } : candidate,
+        ),
+        history: [
+          {
+            id: historyId,
+            itemId: id,
+            itemKind: "planned",
+            type: "title-changed",
+            previousTitle: task.title,
+            title,
+            occurredAt,
+          },
+          ...current.history,
+        ],
+      };
+    });
   }
 
   function changeWorkLogTitle(id: string, title: string) {
-    setDocument((current) =>
-      current
-        ? {
-            ...current,
-            workLog: current.workLog.map((entry) =>
-              entry.id === id && entry.note !== title ? { ...entry, note: title } : entry,
-            ),
-          }
-        : current,
-    );
+    const historyId = createId("history");
+    const occurredAt = Date.now();
+    setDocument((current) => {
+      if (!current) return current;
+      const entry = current.workLog.find((candidate) => candidate.id === id);
+      if (!entry || entry.note === title) return current;
+      return {
+        ...current,
+        workLog: current.workLog.map((candidate) =>
+          candidate.id === id ? { ...candidate, note: title } : candidate,
+        ),
+        history: [
+          {
+            id: historyId,
+            itemId: id,
+            itemKind: "did",
+            type: "title-changed",
+            previousTitle: entry.note,
+            title,
+            occurredAt,
+          },
+          ...current.history,
+        ],
+      };
+    });
   }
 
   function openNotes(target: NotesTarget) {
@@ -485,14 +535,6 @@ function App() {
     setRemovedItem(null);
   }
 
-  function moveDate(direction: -1 | 1) {
-    setIsDatePickerOpen(false);
-    setDateMotionDirection(direction === -1 ? "previous" : "next");
-    setAnchorTimestamp((current) =>
-      moveScaleDate(new Date(current), timeScale, direction).getTime(),
-    );
-  }
-
   function selectDate(date: Date) {
     const current = new Date(anchorTimestamp);
     const selectedTimestamp = timestampOnDate(date, current);
@@ -506,8 +548,6 @@ function App() {
     setIsDatePickerOpen(false);
     globalThis.requestAnimationFrame(() => dateButtonRef.current?.focus());
   }
-
-  const scaleLabel = timeScale;
 
   return (
     <div className="leslie-app">
@@ -569,50 +609,25 @@ function App() {
               </div>
               <div className="time-support">
                 <LiveClock />
-                <button
-                  aria-label="Refresh Leslie"
-                  className="renderer-refresh"
-                  onClick={() => globalThis.location.reload()}
-                  title="Refresh renderer"
-                  type="button"
-                >
-                  <RefreshIcon />
-                </button>
               </div>
             </div>
             <div className="date-navigation-wrap" ref={dateNavigationRef}>
               <div className="date-navigation">
                 <button
-                  aria-keyshortcuts="H"
-                  aria-label={`Previous ${scaleLabel}`}
-                  onClick={() => moveDate(-1)}
-                  title={`Previous ${scaleLabel} (H)`}
-                  type="button"
-                >
-                  <ScaleArrow direction="previous" />
-                </button>
-                <button
                   aria-controls="date-picker"
                   aria-expanded={isDatePickerOpen}
                   aria-haspopup="dialog"
+                  aria-keyshortcuts="H L"
                   aria-label="Choose date"
                   className="current-date"
                   onClick={() => setIsDatePickerOpen((current) => !current)}
                   ref={dateButtonRef}
+                  title="Choose date. H and L move through dates."
                   type="button"
                 >
                   <span aria-live="polite">
                     {formatScaleDate(timeScale, new Date(anchorTimestamp))}
                   </span>
-                </button>
-                <button
-                  aria-keyshortcuts="L"
-                  aria-label={`Next ${scaleLabel}`}
-                  onClick={() => moveDate(1)}
-                  title={`Next ${scaleLabel} (L)`}
-                  type="button"
-                >
-                  <ScaleArrow direction="next" />
                 </button>
               </div>
               {isDatePickerOpen ? (
@@ -641,6 +656,7 @@ function App() {
                 "This list"
               }
               isPlaying={isPlaying}
+              history={visibleHistory}
               onComplete={completeTask}
               onEstimateChange={changeEstimate}
               onOpenTaskNotes={(id) => openNotes({ kind: "task", id })}

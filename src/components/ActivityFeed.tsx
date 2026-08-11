@@ -8,11 +8,18 @@ import {
 import { parseEntryLabels } from "../entry-labels";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
 import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
-import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
+import type {
+  ActivityHistoryEntry,
+  EstimateMinutes,
+  PlannedItem,
+  TimeScale,
+  WorkLogEntry,
+} from "../model";
 import { taskNavigationIndex } from "../task-navigation";
 
 interface ActivityFeedProps {
   readonly activeListName: string;
+  readonly history: readonly ActivityHistoryEntry[];
   readonly isPlaying: boolean;
   readonly playingTaskId: string | null;
   readonly tasks: readonly PlannedItem[];
@@ -79,9 +86,23 @@ function EntryLabels({ labels }: { readonly labels: readonly string[] }) {
   );
 }
 
+function historyDescription(entry: ActivityHistoryEntry): string {
+  switch (entry.type) {
+    case "planned-created":
+      return `Planned “${entry.title}”`;
+    case "did-created":
+      return `Recorded “${entry.title}”`;
+    case "planned-completed":
+      return `Completed “${entry.title}”`;
+    case "title-changed":
+      return `Renamed ${entry.itemKind} from “${entry.previousTitle}” to “${entry.title}”`;
+  }
+}
+
 /** Render planned items and completed-work entries as one chronological work surface. */
 export function ActivityFeed({
   activeListName,
+  history,
   isPlaying,
   playingTaskId,
   tasks,
@@ -108,6 +129,10 @@ export function ActivityFeed({
           : left.createdAt - right.createdAt,
       ),
     [workLog, workLogSort],
+  );
+  const sortedHistory = useMemo(
+    () => [...history].sort((left, right) => right.occurredAt - left.occurredAt),
+    [history],
   );
 
   function startEditing(kind: EditableEntry["kind"], id: string, title: string) {
@@ -203,7 +228,7 @@ export function ActivityFeed({
     return () => globalThis.document.removeEventListener("keydown", navigateActivity);
   }, []);
 
-  if (tasks.length === 0 && workLog.length === 0) {
+  if (tasks.length === 0 && workLog.length === 0 && history.length === 0) {
     return (
       <section className="activity-feed activity-feed-empty" aria-label="Activity">
         <div className="empty-state">
@@ -355,6 +380,35 @@ export function ActivityFeed({
               </article>
             );
           })
+        )}
+      </section>
+
+      <section aria-labelledby="history-section-title" className="history-panel">
+        <header className="history-panel-header">
+          <h2 id="history-section-title">History</h2>
+          {sortedHistory.length > 0 ? (
+            <span>
+              {sortedHistory.length} {sortedHistory.length === 1 ? "change" : "changes"}
+            </span>
+          ) : null}
+        </header>
+        {sortedHistory.length > 0 ? (
+          <ol className="history-timeline">
+            {sortedHistory.map((entry) => (
+              <li key={entry.id}>
+                <span aria-hidden="true" className="history-marker" />
+                <div>
+                  <p>{historyDescription(entry)}</p>
+                  <time dateTime={new Date(entry.occurredAt).toISOString()}>
+                    {workLogDateFormatter.format(entry.occurredAt)} ·{" "}
+                    {formatCompactTime(entry.occurredAt)}
+                  </time>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="history-empty">No history yet. New changes will appear here.</p>
         )}
       </section>
 

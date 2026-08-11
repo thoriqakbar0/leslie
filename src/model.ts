@@ -31,12 +31,31 @@ export interface WorkLogEntry {
   readonly createdAt: number;
 }
 
+interface ActivityHistoryBase {
+  readonly id: string;
+  readonly itemId: string;
+  readonly occurredAt: number;
+  readonly title: string;
+}
+
+/** A durable record of a user-visible activity change. */
+export type ActivityHistoryEntry =
+  | (ActivityHistoryBase & { readonly type: "planned-created" })
+  | (ActivityHistoryBase & { readonly type: "did-created" })
+  | (ActivityHistoryBase & { readonly type: "planned-completed" })
+  | (ActivityHistoryBase & {
+      readonly type: "title-changed";
+      readonly itemKind: "planned" | "did";
+      readonly previousTitle: string;
+    });
+
 /** The complete local Leslie document. */
 export interface LeslieState {
   readonly lists: readonly TaskList[];
   readonly activeListId: string;
   readonly tasks: readonly PlannedItem[];
   readonly workLog: readonly WorkLogEntry[];
+  readonly history: readonly ActivityHistoryEntry[];
 }
 
 /** All supported expected-time values, in display order. */
@@ -156,6 +175,7 @@ export function createInitialState(now = new Date()): LeslieState {
         createdAt: todayAt(now, 9, 58),
       },
     ],
+    history: [],
   };
 }
 

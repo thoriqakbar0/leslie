@@ -24,6 +24,17 @@ const state = {
   workLog: [
     { id: "log-one", note: "Reviewed notes.", notes: "Follow up tomorrow.", createdAt: 200 },
   ],
+  history: [
+    {
+      id: "history-one",
+      itemId: "task-one",
+      type: "title-changed",
+      itemKind: "planned",
+      previousTitle: "Prepare agenda",
+      title: "Prepare notes",
+      occurredAt: 300,
+    },
+  ],
 };
 
 const temporaryDirectories = [];
@@ -98,6 +109,7 @@ describe("SQLite storage", () => {
     expect(database.loadState()?.workLog).toEqual([
       { id: "log-old", note: "Existing log", notes: "", createdAt: 200 },
     ]);
+    expect(database.loadState()?.history).toEqual([]);
   });
 
   it("adds empty work-log notes when opening a version-two database", () => {
@@ -143,6 +155,44 @@ describe("SQLite storage", () => {
     expect(database.loadState()?.workLog).toEqual([
       { id: "log-old", note: "Existing log", notes: "", createdAt: 200 },
     ]);
+    expect(database.loadState()?.history).toEqual([]);
+  });
+
+  it("adds empty history when opening a version-three database", () => {
+    const directory = mkdtempSync(path.join(tmpdir(), "leslie-sqlite-test-"));
+    temporaryDirectories.push(directory);
+    const databasePath = path.join(directory, "leslie.sqlite3");
+    const previousDatabase = new DatabaseSync(databasePath);
+    previousDatabase.exec(`
+      CREATE TABLE lists (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, position INTEGER NOT NULL UNIQUE) STRICT;
+      CREATE TABLE app_state (singleton INTEGER PRIMARY KEY, active_list_id TEXT NOT NULL) STRICT;
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY NOT NULL,
+        list_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        notes TEXT NOT NULL,
+        estimated_minutes INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        position INTEGER NOT NULL UNIQUE
+      ) STRICT;
+      CREATE TABLE work_log (
+        id TEXT PRIMARY KEY NOT NULL,
+        note TEXT NOT NULL,
+        notes TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        position INTEGER NOT NULL UNIQUE
+      ) STRICT;
+      INSERT INTO lists VALUES ('inbox', 'Inbox', 0);
+      INSERT INTO app_state VALUES (1, 'inbox');
+      INSERT INTO tasks VALUES ('task-old', 'inbox', 'Existing task', '', 30, 100, 0);
+      PRAGMA user_version = 3;
+    `);
+    previousDatabase.close();
+
+    const database = createLeslieDatabase(databasePath);
+    databases.push(database);
+
+    expect(database.loadState()?.history).toEqual([]);
   });
 
   it("starts empty and round-trips the complete state", () => {
@@ -165,6 +215,7 @@ describe("SQLite storage", () => {
         { id: "log-two", note: "Second entry.", notes: "Second notes.", createdAt: 300 },
         { id: "log-one", note: "First entry.", notes: "", createdAt: 200 },
       ],
+      history: [],
     };
 
     database.saveState(replacement);

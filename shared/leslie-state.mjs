@@ -55,6 +55,37 @@ function parseWorkLogEntry(value) {
     : { id, note, notes, createdAt };
 }
 
+function parseHistoryEntry(value) {
+  if (!isRecord(value)) return null;
+  const id = parseNonEmptyString(value.id);
+  const itemId = parseNonEmptyString(value.itemId);
+  const title = parseNonEmptyString(value.title);
+  const occurredAt = parseTimestamp(value.occurredAt);
+  if (id === null || itemId === null || title === null || occurredAt === null) return null;
+
+  if (
+    value.type === "planned-created" ||
+    value.type === "did-created" ||
+    value.type === "planned-completed"
+  ) {
+    return { id, itemId, type: value.type, title, occurredAt };
+  }
+  if (value.type !== "title-changed") return null;
+  const previousTitle = parseNonEmptyString(value.previousTitle);
+  if (previousTitle === null || (value.itemKind !== "planned" && value.itemKind !== "did")) {
+    return null;
+  }
+  return {
+    id,
+    itemId,
+    itemKind: value.itemKind,
+    type: value.type,
+    previousTitle,
+    title,
+    occurredAt,
+  };
+}
+
 function parseUniqueItems(values, parseItem) {
   const items = [];
   const ids = new Set();
@@ -69,11 +100,13 @@ function parseUniqueItems(values, parseItem) {
 
 /** Parse unknown input into a complete Leslie state, or return null when any invariant fails. */
 export function parseLeslieState(value) {
+  const historyValues = isRecord(value) && value.history === undefined ? [] : value?.history;
   if (
     !isRecord(value) ||
     !Array.isArray(value.lists) ||
     !Array.isArray(value.tasks) ||
-    !Array.isArray(value.workLog)
+    !Array.isArray(value.workLog) ||
+    !Array.isArray(historyValues)
   ) {
     return null;
   }
@@ -86,7 +119,8 @@ export function parseLeslieState(value) {
 
   const tasks = parseUniqueItems(value.tasks, (task) => parseTask(task, listIds));
   const workLog = parseUniqueItems(value.workLog, parseWorkLogEntry);
-  if (tasks === null || workLog === null) return null;
+  const history = parseUniqueItems(historyValues, parseHistoryEntry);
+  if (tasks === null || workLog === null || history === null) return null;
 
-  return { lists, activeListId, tasks, workLog };
+  return { lists, activeListId, tasks, workLog, history };
 }

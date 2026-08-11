@@ -15,6 +15,17 @@ const validState = {
     },
   ],
   workLog: [{ id: "log-one", note: "Reviewed notes.", notes: "Follow up.", createdAt: 200 }],
+  history: [
+    {
+      id: "history-one",
+      itemId: "task-one",
+      type: "title-changed",
+      itemKind: "planned",
+      previousTitle: "Prepare agenda",
+      title: "Prepare notes",
+      occurredAt: 300,
+    },
+  ],
 };
 
 describe("Leslie state parser", () => {
@@ -86,6 +97,21 @@ describe("Leslie state parser", () => {
       parseLeslieState({
         ...validState,
         workLog: [{ ...validState.workLog[0], notes: 42 }],
+      }),
+    ).toBeNull();
+  });
+
+  it("initializes absent history and rejects invalid history variants", () => {
+    const { history: _history, ...stateWithoutHistory } = validState;
+    expect(parseLeslieState(stateWithoutHistory)).toEqual({
+      ...stateWithoutHistory,
+      history: [],
+    });
+
+    expect(
+      parseLeslieState({
+        ...validState,
+        history: [{ ...validState.history[0], previousTitle: "" }],
       }),
     ).toBeNull();
   });
