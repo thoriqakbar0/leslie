@@ -24,6 +24,7 @@ const state = {
   workLog: [
     {
       id: "log-one",
+      listId: "work",
       note: "Reviewed notes.",
       notes: "Follow up tomorrow.",
       origin: "direct",
@@ -113,7 +114,14 @@ describe("SQLite storage", () => {
       },
     ]);
     expect(database.loadState()?.workLog).toEqual([
-      { id: "log-old", note: "Existing log", notes: "", origin: "direct", createdAt: 200 },
+      {
+        id: "log-old",
+        listId: "inbox",
+        note: "Existing log",
+        notes: "",
+        origin: "direct",
+        createdAt: 200,
+      },
     ]);
     expect(database.loadState()?.history).toEqual([]);
   });
@@ -159,7 +167,14 @@ describe("SQLite storage", () => {
     databases.push(database);
 
     expect(database.loadState()?.workLog).toEqual([
-      { id: "log-old", note: "Existing log", notes: "", origin: "direct", createdAt: 200 },
+      {
+        id: "log-old",
+        listId: "inbox",
+        note: "Existing log",
+        notes: "",
+        origin: "direct",
+        createdAt: 200,
+      },
     ]);
     expect(database.loadState()?.history).toEqual([]);
   });
@@ -227,13 +242,49 @@ describe("SQLite storage", () => {
     expect(database.loadState()?.workLog).toEqual([
       {
         id: "task-old",
+        listId: "inbox",
         note: "Renamed completed work",
         notes: "",
         origin: "planned",
         createdAt: 200,
       },
-      { id: "log-old", note: "Direct work", notes: "", origin: "direct", createdAt: 100 },
+      {
+        id: "log-old",
+        listId: "inbox",
+        note: "Direct work",
+        notes: "",
+        origin: "direct",
+        createdAt: 100,
+      },
     ]);
+  });
+
+  it("assigns existing work logs to the active folder when opening a version-five database", () => {
+    const directory = mkdtempSync(path.join(tmpdir(), "leslie-sqlite-test-"));
+    temporaryDirectories.push(directory);
+    const databasePath = path.join(directory, "leslie.sqlite3");
+    const previousDatabase = new DatabaseSync(databasePath);
+    previousDatabase.exec(`
+      CREATE TABLE lists (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, position INTEGER NOT NULL UNIQUE) STRICT;
+      CREATE TABLE app_state (singleton INTEGER PRIMARY KEY, active_list_id TEXT NOT NULL) STRICT;
+      CREATE TABLE tasks (id TEXT PRIMARY KEY NOT NULL, list_id TEXT NOT NULL, title TEXT NOT NULL, notes TEXT NOT NULL, estimated_minutes INTEGER NOT NULL, created_at INTEGER NOT NULL, position INTEGER NOT NULL UNIQUE) STRICT;
+      CREATE TABLE work_log (id TEXT PRIMARY KEY NOT NULL, note TEXT NOT NULL, notes TEXT NOT NULL, origin TEXT NOT NULL, created_at INTEGER NOT NULL, position INTEGER NOT NULL UNIQUE) STRICT;
+      CREATE TABLE history (id TEXT PRIMARY KEY NOT NULL, type TEXT NOT NULL, item_id TEXT NOT NULL, item_kind TEXT, title TEXT NOT NULL, previous_title TEXT, occurred_at INTEGER NOT NULL, position INTEGER NOT NULL UNIQUE) STRICT;
+      INSERT INTO lists VALUES ('inbox', 'Inbox', 0);
+      INSERT INTO lists VALUES ('work', 'Work', 1);
+      INSERT INTO app_state VALUES (1, 'work');
+      INSERT INTO work_log VALUES ('log-old', 'Existing work', '', 'direct', 200, 0);
+      PRAGMA user_version = 5;
+    `);
+    previousDatabase.close();
+
+    const database = createLeslieDatabase(databasePath);
+    databases.push(database);
+
+    expect(database.loadState()?.workLog[0]?.listId).toBe("work");
+    const migratedDatabase = new DatabaseSync(databasePath);
+    expect(migratedDatabase.prepare("PRAGMA user_version").get()?.user_version).toBe(6);
+    migratedDatabase.close();
   });
 
   it("starts empty and round-trips the complete state", () => {
@@ -255,6 +306,7 @@ describe("SQLite storage", () => {
       workLog: [
         {
           id: "log-two",
+          listId: "work",
           note: "Second entry.",
           notes: "Second notes.",
           origin: "planned",
@@ -262,6 +314,7 @@ describe("SQLite storage", () => {
         },
         {
           id: "log-one",
+          listId: "inbox",
           note: "First entry.",
           notes: "",
           origin: "direct",

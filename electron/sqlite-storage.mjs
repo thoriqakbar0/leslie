@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { parseLeslieState } from "../shared/leslie-state.mjs";
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 const HISTORY_SCHEMA = `
   CREATE TABLE history (
@@ -49,6 +49,20 @@ function initializeSchema(database) {
           SELECT 1 FROM history
           WHERE history.item_id = work_log.id AND history.type = 'planned-completed'
         );
+      ALTER TABLE work_log ADD COLUMN list_id TEXT REFERENCES lists(id);
+      UPDATE work_log
+      SET list_id = (SELECT active_list_id FROM app_state WHERE singleton = 1);
+      PRAGMA user_version = ${SCHEMA_VERSION};
+      COMMIT;
+    `);
+    return;
+  }
+  if (version === 5) {
+    database.exec(`
+      BEGIN IMMEDIATE;
+      ALTER TABLE work_log ADD COLUMN list_id TEXT REFERENCES lists(id);
+      UPDATE work_log
+      SET list_id = (SELECT active_list_id FROM app_state WHERE singleton = 1);
       PRAGMA user_version = ${SCHEMA_VERSION};
       COMMIT;
     `);
@@ -82,6 +96,7 @@ function initializeSchema(database) {
 
     CREATE TABLE work_log (
       id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
+      list_id TEXT NOT NULL REFERENCES lists(id),
       note TEXT NOT NULL CHECK (length(trim(note)) > 0),
       notes TEXT NOT NULL DEFAULT '',
       origin TEXT NOT NULL DEFAULT 'direct' CHECK (origin IN ('direct', 'planned')),
@@ -128,7 +143,7 @@ export function createLeslieDatabase(databasePath) {
     "INSERT INTO tasks (id, list_id, title, notes, estimated_minutes, created_at, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const insertWorkLog = database.prepare(
-    "INSERT INTO work_log (id, note, notes, origin, created_at, position) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO work_log (id, list_id, note, notes, origin, created_at, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const insertAppState = database.prepare(
     "INSERT INTO app_state (singleton, active_list_id) VALUES (1, ?)",
@@ -174,10 +189,13 @@ export function createLeslieDatabase(databasePath) {
             scheduledAt: row.created_at,
           })),
         workLog: database
-          .prepare("SELECT id, note, notes, origin, created_at FROM work_log ORDER BY position")
+          .prepare(
+            "SELECT id, list_id, note, notes, origin, created_at FROM work_log ORDER BY position",
+          )
           .all()
           .map((row) => ({
             id: row.id,
+            listId: row.list_id,
             note: row.note,
             notes: row.notes,
             origin: row.origin,
@@ -238,6 +256,7 @@ export function createLeslieDatabase(databasePath) {
         state.workLog.forEach((entry, position) =>
           insertWorkLog.run(
             entry.id,
+            entry.listId,
             entry.note,
             entry.notes,
             entry.origin,

@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { parseEntryLabels, type LabeledEntryText } from "../entry-labels";
+import { folderTone } from "../folder-identity";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
 import {
   ESTIMATE_OPTIONS,
@@ -14,18 +15,20 @@ import {
   parseEstimate,
   timestampAtClockTime,
 } from "../model";
-import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
+import type { EstimateMinutes, PlannedItem, TaskList, TimeScale, WorkLogEntry } from "../model";
 import { taskNavigationIndex } from "../task-navigation";
 
 interface ActivityFeedProps {
   readonly activeListName: string;
   readonly isPlaying: boolean;
+  readonly lists: readonly TaskList[];
   readonly playingTaskId: string | null;
   readonly tasks: readonly PlannedItem[];
   readonly timeScale: TimeScale;
   readonly workLog: readonly WorkLogEntry[];
   readonly onComplete: (id: string) => void;
   readonly onEstimateChange: (id: string, estimate: EstimateMinutes) => void;
+  readonly onMoveTask: (id: string, listId: string) => void;
   readonly onOpenTaskNotes: (id: string) => void;
   readonly onOpenWorkLogNotes: (id: string) => void;
   readonly onRemoveTask: (id: string) => void;
@@ -90,6 +93,25 @@ function EditIcon() {
   );
 }
 
+function MoveIcon() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
+      <path d="M3.5 6.5h5l1.5 2h6.5v7h-13Z" />
+      <path d="m11.5 4 2.5 2.5L11.5 9M14 6.5H8" />
+    </svg>
+  );
+}
+
+function FolderBadge({ list }: { readonly list: TaskList | undefined }) {
+  if (list === undefined) return null;
+  return (
+    <span className={`folder-badge folder-tone-${folderTone(list.id)}`}>
+      <span aria-hidden="true" className="folder-badge-dot" />
+      {list.name}
+    </span>
+  );
+}
+
 function EntryTitle({ entry }: { readonly entry: LabeledEntryText }) {
   if (entry.labels.length === 0) return entry.text || "Untitled";
   return (
@@ -108,12 +130,14 @@ function EntryTitle({ entry }: { readonly entry: LabeledEntryText }) {
 export function ActivityFeed({
   activeListName,
   isPlaying,
+  lists,
   playingTaskId,
   tasks,
   timeScale,
   workLog,
   onComplete,
   onEstimateChange,
+  onMoveTask,
   onOpenTaskNotes,
   onOpenWorkLogNotes,
   onRemoveTask,
@@ -126,6 +150,7 @@ export function ActivityFeed({
   const [workLogSort, setWorkLogSort] = useState<WorkLogSort>("newest");
   const [editableEntry, setEditableEntry] = useState<EditableEntry | null>(null);
   const [editableTime, setEditableTime] = useState<EditableTime | null>(null);
+  const [movingTaskId, setMovingTaskId] = useState<string | null>(null);
   const isFinishingEdit = useRef(false);
   const isFinishingTimeEdit = useRef(false);
   const sortedWorkLog = useMemo(
@@ -137,6 +162,7 @@ export function ActivityFeed({
       ),
     [workLog, workLogSort],
   );
+  const listsById = useMemo(() => new Map(lists.map((list) => [list.id, list])), [lists]);
 
   function startEditing(kind: EditableEntry["kind"], id: string, title: string) {
     isFinishingEdit.current = false;
@@ -181,6 +207,21 @@ export function ActivityFeed({
     }
     event.preventDefault();
     startEditing(kind, id, title);
+  }
+
+  function taskShortcut(event: ReactKeyboardEvent<HTMLButtonElement>, task: PlannedItem) {
+    if (
+      event.key.toLowerCase() === "m" &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      setMovingTaskId(task.id);
+      return;
+    }
+    editOnShortcut(event, "task", task.id, task.title);
   }
 
   function startTimeEditing(entry: WorkLogEntry) {
@@ -276,12 +317,16 @@ export function ActivityFeed({
           {tasks.length + workLog.length > 0 ? (
             <p id="activity-navigation-hint">
               <kbd>j</kbd>/<kbd>k</kbd> move <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
-              notes <span aria-hidden="true">·</span> <kbd>e</kbd> edit
+              notes <span aria-hidden="true">·</span> <kbd>e</kbd> edit{" "}
+              <span aria-hidden="true">·</span> <kbd>m</kbd> folder
             </p>
           ) : null}
         </header>
-        <span className="visually-hidden" id="activity-notes-action-hint">
-          Opens notes for this activity. Press E to edit its title.
+        <span className="visually-hidden" id="task-notes-action-hint">
+          Opens notes for this task. Press E to edit its title. Press M to move it.
+        </span>
+        <span className="visually-hidden" id="log-notes-action-hint">
+          Opens notes for this timeline entry. Press E to edit its title.
         </span>
 
         {tasks.length === 0 ? (
@@ -339,13 +384,13 @@ export function ActivityFeed({
                       />
                     ) : (
                       <button
-                        aria-describedby={`${metadataId} activity-notes-action-hint`}
-                        aria-keyshortcuts="Enter E"
+                        aria-describedby={`${metadataId} task-notes-action-hint`}
+                        aria-keyshortcuts="Enter E M"
                         className="task-notes-trigger"
                         data-activity-navigation-target=""
                         data-notes-trigger={`task:${task.id}`}
                         onClick={() => onOpenTaskNotes(task.id)}
-                        onKeyDown={(event) => editOnShortcut(event, "task", task.id, task.title)}
+                        onKeyDown={(event) => taskShortcut(event, task)}
                         type="button"
                       >
                         <EntryTitle entry={labeledTitle} />
@@ -359,6 +404,7 @@ export function ActivityFeed({
                       <time dateTime={new Date(task.scheduledAt).toISOString()}>
                         {formatCompactTime(task.scheduledAt)}
                       </time>
+                      <FolderBadge list={listsById.get(task.listId)} />
                     </p>
                     <div className="task-card-estimate">
                       <label className="task-card-estimate-label" htmlFor={`estimate-${task.id}`}>
@@ -384,6 +430,39 @@ export function ActivityFeed({
                   </div>
                 </div>
                 <div className="task-card-actions">
+                  {movingTaskId === task.id ? (
+                    <select
+                      aria-label={`Move ${visibleTitle} to folder`}
+                      autoFocus
+                      className="task-folder-select"
+                      onBlur={() => setMovingTaskId(null)}
+                      onChange={(event) => {
+                        onMoveTask(task.id, event.target.value);
+                        setMovingTaskId(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") setMovingTaskId(null);
+                      }}
+                      value={task.listId}
+                    >
+                      {lists.map((list) => (
+                        <option key={list.id} value={list.id}>
+                          {list.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <button
+                      aria-keyshortcuts="M"
+                      aria-label={`Move ${visibleTitle} to another folder`}
+                      className="task-move"
+                      onClick={() => setMovingTaskId(task.id)}
+                      title="Move to folder (M)"
+                      type="button"
+                    >
+                      <MoveIcon />
+                    </button>
+                  )}
                   <button
                     aria-describedby={`${metadataId} playback-action-hint`}
                     aria-label={`Playback for ${visibleTitle}`}
@@ -476,11 +555,12 @@ export function ActivityFeed({
               </div>
               <span aria-hidden="true" className="timeline-marker" />
               <div className="activity-copy">
-                {entry.origin === "planned" ? (
-                  <div className="activity-kind-line">
+                <div className="activity-kind-line">
+                  <FolderBadge list={listsById.get(entry.listId)} />
+                  {entry.origin === "planned" ? (
                     <span className="planned-origin">From planned</span>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
                 <div className="log-title-line">
                   {editableEntry?.key === `log:${entry.id}` ? (
                     <input
@@ -501,7 +581,7 @@ export function ActivityFeed({
                     />
                   ) : (
                     <button
-                      aria-describedby={`${metadataId} activity-notes-action-hint`}
+                      aria-describedby={`${metadataId} log-notes-action-hint`}
                       aria-keyshortcuts="Enter E"
                       className="log-notes-trigger"
                       data-activity-navigation-target=""

@@ -16,6 +16,7 @@ import type { WorkLogEntry } from "./model";
 
 const firstLog: WorkLogEntry = {
   id: "log-first",
+  listId: "inbox",
   note: "First",
   notes: "",
   origin: "direct",
@@ -23,6 +24,7 @@ const firstLog: WorkLogEntry = {
 };
 const secondLog: WorkLogEntry = {
   id: "log-second",
+  listId: "inbox",
   note: "Second",
   notes: "",
   origin: "direct",
@@ -30,6 +32,7 @@ const secondLog: WorkLogEntry = {
 };
 const thirdLog: WorkLogEntry = {
   id: "log-third",
+  listId: "work",
   note: "Third",
   notes: "",
   origin: "direct",

@@ -40,7 +40,12 @@ type NotesTarget =
 type RemovedItem =
   | { readonly kind: "task"; readonly task: PlannedItem }
   | { readonly kind: "log"; readonly entry: WorkLogEntry }
-  | { readonly kind: "list"; readonly list: TaskList; readonly tasks: readonly PlannedItem[] };
+  | {
+      readonly kind: "list";
+      readonly list: TaskList;
+      readonly tasks: readonly PlannedItem[];
+      readonly workLog: readonly WorkLogEntry[];
+    };
 
 function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -253,6 +258,7 @@ function App() {
     const nextActiveList = lists.find((candidate) => candidate.id === "inbox") ?? lists[0];
     if (!nextActiveList) return;
     const removedTasks = current.tasks.filter((task) => task.listId === id);
+    const removedWorkLog = current.workLog.filter((entry) => entry.listId === id);
     if (removedTasks.some((task) => task.id === playingTaskId)) stopPlaying();
     if (
       activeNotesTarget?.kind === "task" &&
@@ -260,12 +266,15 @@ function App() {
     ) {
       setActiveNotesTarget(null);
     }
-    setRemovedItem({ kind: "list", list, tasks: removedTasks });
+    setRemovedItem({ kind: "list", list, tasks: removedTasks, workLog: removedWorkLog });
     setDocument({
       ...current,
       lists,
       activeListId: nextActiveList.id,
       tasks: current.tasks.filter((task) => task.listId !== id),
+      workLog: current.workLog.map((entry) =>
+        entry.listId === id ? { ...entry, listId: nextActiveList.id } : entry,
+      ),
     });
   }
 
@@ -314,7 +323,14 @@ function App() {
         ? {
             ...current,
             workLog: [
-              { id: logId, note, notes: "", origin: "direct", createdAt },
+              {
+                id: logId,
+                listId: current.activeListId,
+                note,
+                notes: "",
+                origin: "direct",
+                createdAt,
+              },
               ...current.workLog,
             ],
             history: [historyEntry, ...current.history],
@@ -337,6 +353,7 @@ function App() {
         workLog: [
           {
             id: task.id,
+            listId: task.listId,
             note: `Completed ${task.title}.`,
             notes: task.notes,
             origin: "planned",
@@ -444,6 +461,18 @@ function App() {
     );
   }
 
+  function moveTask(id: string, listId: string) {
+    setDocument((current) => {
+      if (!current || !current.lists.some((list) => list.id === listId)) return current;
+      return {
+        ...current,
+        tasks: current.tasks.map((task) =>
+          task.id === id && task.listId !== listId ? { ...task, listId } : task,
+        ),
+      };
+    });
+  }
+
   function openNotes(target: NotesTarget) {
     setIsDatePickerOpen(false);
     setActiveNotesTarget(target);
@@ -548,6 +577,10 @@ function App() {
             lists: [...current.lists, removedItem.list],
             activeListId: removedItem.list.id,
             tasks: [...removedItem.tasks, ...current.tasks],
+            workLog: current.workLog.map((entry) => {
+              const restored = removedItem.workLog.find((candidate) => candidate.id === entry.id);
+              return restored ?? entry;
+            }),
           };
       }
     });
@@ -675,8 +708,10 @@ function App() {
                 "This folder"
               }
               isPlaying={isPlaying}
+              lists={document.lists}
               onComplete={completeTask}
               onEstimateChange={changeEstimate}
+              onMoveTask={moveTask}
               onOpenTaskNotes={(id) => openNotes({ kind: "task", id })}
               onOpenWorkLogNotes={(id) => openNotes({ kind: "log", id })}
               onRemoveTask={removeTask}

@@ -11,6 +11,9 @@
   --faint: oklch(0.545 0.014 75.273);
   --line: oklch(0.881 0.019 83.063);
   --accent: oklch(0.54 0.162 37.967);
+  --folder-color-1: oklch(0.54 0.105 229);
+  --folder-color-2: oklch(0.53 0.105 153);
+  --folder-color-3: oklch(0.56 0.105 306);
   --selected: oklch(0.936 0.015 80.706);
   --on-accent: oklch(0.987 0.008 67.727);
   --control-border: oklch(0.579 0.017 76.987);
@@ -35,6 +38,9 @@
     --faint: oklch(0.778 0.022 252.537);
     --line: oklch(0.37 0.029 252.51);
     --accent: oklch(0.805 0.117 43.262);
+    --folder-color-1: oklch(0.76 0.095 229);
+    --folder-color-2: oklch(0.75 0.095 153);
+    --folder-color-3: oklch(0.77 0.095 306);
     --selected: oklch(0.281 0.018 59.814);
     --on-accent: oklch(0.206 0.032 39.172);
     --control-border: oklch(0.663 0.026 256.142);
@@ -1480,6 +1486,10 @@ kbd {
 }
 
 .task-card-metadata {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
   margin: 0;
   color: var(--muted);
   font-size: 11px;
@@ -1513,6 +1523,82 @@ kbd {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.folder-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--selected);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.folder-badge-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--folder-tone, var(--accent));
+}
+
+.folder-tone-1 {
+  --folder-tone: var(--folder-color-1);
+}
+
+.folder-tone-2 {
+  --folder-tone: var(--folder-color-2);
+}
+
+.folder-tone-3 {
+  --folder-tone: var(--folder-color-3);
+}
+
+.task-move {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.task-move:hover,
+.task-move:focus-visible {
+  background: var(--selected);
+  color: var(--ink);
+}
+
+.task-move svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.task-folder-select {
+  width: 112px;
+  min-width: 0;
+  padding: 6px 24px 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--selected);
+  color: var(--ink);
+  font-size: 12px;
 }
 
 .task-play {
@@ -1570,7 +1656,7 @@ kbd {
 
 .activity-kind-line {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }

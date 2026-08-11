@@ -15,6 +15,7 @@ const task: PlannedItem = {
 
 const log: WorkLogEntry = {
   id: "log-one",
+  listId: "work",
   note: "Reviewed the invoice.",
   notes: "Follow up tomorrow.",
   origin: "direct",
@@ -33,12 +34,17 @@ function renderFeed(
     createElement(ActivityFeed, {
       activeListName: "Inbox",
       isPlaying: playback.isPlaying,
+      lists: [
+        { id: "inbox", name: "Inbox" },
+        { id: "work", name: "Work" },
+      ],
       playingTaskId: playback.playingTaskId,
       tasks,
       timeScale: "day",
       workLog,
       onComplete: () => undefined,
       onEstimateChange: () => undefined,
+      onMoveTask: () => undefined,
       onOpenTaskNotes: () => undefined,
       onOpenWorkLogNotes: () => undefined,
       onRemoveTask: () => undefined,
@@ -77,13 +83,18 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('aria-label="Playback for Send the invoice"');
     expect(html).toContain('aria-describedby="task-metadata-task-one playback-action-hint"');
     expect(html).toContain("Press to switch between playing and paused.");
-    expect(html).toContain("Opens notes for this activity. Press E to edit its title.");
-    expect(html).toContain('aria-describedby="task-metadata-task-one activity-notes-action-hint"');
+    expect(html).toContain(
+      "Opens notes for this task. Press E to edit its title. Press M to move it.",
+    );
+    expect(html).toContain('aria-describedby="task-metadata-task-one task-notes-action-hint"');
     expect(html).toContain('aria-keyshortcuts="j k"');
     expect(html).toContain('data-activity-card="task:task-one"');
     expect(html).toContain('data-activity-navigation-target=""');
     expect(html).toContain('data-notes-trigger="task:task-one"');
-    expect(html).toContain('aria-keyshortcuts="Enter E"');
+    expect(html).toContain('aria-keyshortcuts="Enter E M"');
+    expect(html).toContain('aria-label="Move Send the invoice to another folder"');
+    expect(html).toContain('class="folder-badge folder-tone-');
+    expect(html).toContain("Inbox</span>");
     expect(html).toContain('aria-labelledby="task-title-task-one"');
     expect(html).toContain('aria-describedby="task-metadata-task-one"');
     expect(html).toContain('<h2 id="planned-section-title">Planned</h2>');
@@ -135,6 +146,7 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('class="timeline-marker"');
     expect(html).toContain('aria-label="Edit time:');
     expect(html).toContain('aria-label="Edit title: Reviewed the invoice."');
+    expect(html).toContain("Work</span>");
     expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
   });
 
@@ -159,7 +171,7 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('data-activity-navigation-target=""');
     expect(html).toContain('data-notes-trigger="log:log-one"');
     expect(html).toContain('aria-keyshortcuts="Enter E"');
-    expect(html).toContain('aria-describedby="log-metadata-log-one activity-notes-action-hint"');
+    expect(html).toContain('aria-describedby="log-metadata-log-one log-notes-action-hint"');
     expect(html).toContain('id="log-title-log-one"');
     expect(html).toContain(">Reviewed the invoice.</button>");
   });

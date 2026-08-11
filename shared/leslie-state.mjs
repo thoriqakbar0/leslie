@@ -43,9 +43,10 @@ function parseTask(value, listIds) {
   return { id, listId, title, notes, estimatedMinutes: value.estimatedMinutes, scheduledAt };
 }
 
-function parseWorkLogEntry(value) {
+function parseWorkLogEntry(value, listIds, fallbackListId) {
   if (!isRecord(value)) return null;
   const id = parseNonEmptyString(value.id);
+  const listId = value.listId === undefined ? fallbackListId : parseNonEmptyString(value.listId);
   const note = parseNonEmptyString(value.note);
   const notes =
     value.notes === undefined ? "" : typeof value.notes === "string" ? value.notes : null;
@@ -58,9 +59,15 @@ function parseWorkLogEntry(value) {
         ? value.origin
         : null;
   const createdAt = parseTimestamp(value.createdAt);
-  return id === null || note === null || notes === null || origin === null || createdAt === null
+  return id === null ||
+    listId === null ||
+    !listIds.has(listId) ||
+    note === null ||
+    notes === null ||
+    origin === null ||
+    createdAt === null
     ? null
-    : { id, note, notes, origin, createdAt };
+    : { id, listId, note, notes, origin, createdAt };
 }
 
 function parseHistoryEntry(value) {
@@ -126,7 +133,9 @@ export function parseLeslieState(value) {
   if (activeListId === null || !listIds.has(activeListId)) return null;
 
   const tasks = parseUniqueItems(value.tasks, (task) => parseTask(task, listIds));
-  const workLog = parseUniqueItems(value.workLog, parseWorkLogEntry);
+  const workLog = parseUniqueItems(value.workLog, (entry) =>
+    parseWorkLogEntry(entry, listIds, activeListId),
+  );
   const history = parseUniqueItems(historyValues, parseHistoryEntry);
   if (tasks === null || workLog === null || history === null) return null;
 

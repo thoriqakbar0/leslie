@@ -26,6 +26,7 @@ export interface PlannedItem {
 /** A record of work that the user did. */
 export interface WorkLogEntry {
   readonly id: string;
+  readonly listId: string;
   readonly note: string;
   readonly notes: string;
   readonly origin: "direct" | "planned";
@@ -159,6 +160,7 @@ export function createInitialState(now = new Date()): LeslieState {
     workLog: [
       {
         id: "log-details",
+        listId: "inbox",
         note: "Reviewed the invoice details.",
         notes: "",
         origin: "direct",
@@ -166,6 +168,7 @@ export function createInitialState(now = new Date()): LeslieState {
       },
       {
         id: "log-template",
+        listId: "inbox",
         note: "Opened the invoice template.",
         notes: "",
         origin: "direct",
@@ -173,6 +176,7 @@ export function createInitialState(now = new Date()): LeslieState {
       },
       {
         id: "log-source",
+        listId: "inbox",
         note: "Found the last invoice.",
         notes: "",
         origin: "direct",

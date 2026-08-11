@@ -17,6 +17,7 @@ const validState = {
   workLog: [
     {
       id: "log-one",
+      listId: "inbox",
       note: "Reviewed notes.",
       notes: "Follow up.",
       origin: "direct",
@@ -124,6 +125,19 @@ describe("Leslie state parser", () => {
       parseLeslieState({
         ...validState,
         workLog: [{ ...validState.workLog[0], origin: "unknown" }],
+      }),
+    ).toBeNull();
+  });
+
+  it("validates work-log folders and assigns legacy entries to the active folder", () => {
+    const { listId: _listId, ...legacyLog } = validState.workLog[0];
+    expect(parseLeslieState({ ...validState, workLog: [legacyLog] })?.workLog[0].listId).toBe(
+      "inbox",
+    );
+    expect(
+      parseLeslieState({
+        ...validState,
+        workLog: [{ ...validState.workLog[0], listId: "missing" }],
       }),
     ).toBeNull();
   });
