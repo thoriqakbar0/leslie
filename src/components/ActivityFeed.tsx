@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { parseEntryLabels } from "../entry-labels";
+import { parseEntryLabels, type LabeledEntryText } from "../entry-labels";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
 import {
   ESTIMATE_OPTIONS,
@@ -90,14 +90,17 @@ function EditIcon() {
   );
 }
 
-function EntryLabels({ labels }: { readonly labels: readonly string[] }) {
-  if (labels.length === 0) return null;
+function EntryTitle({ entry }: { readonly entry: LabeledEntryText }) {
+  if (entry.labels.length === 0) return entry.text || "Untitled";
   return (
-    <ul aria-label="Labels" className="entry-labels">
-      {labels.map((label) => (
-        <li key={label}>{label}</li>
+    <>
+      {entry.text.length === 0 ? "Untitled " : null}
+      {entry.parts.map((part, index) => (
+        <span className={part.kind === "label" ? "entry-title-label" : undefined} key={index}>
+          {part.value}
+        </span>
       ))}
-    </ul>
+    </>
   );
 }
 
@@ -345,7 +348,7 @@ export function ActivityFeed({
                         onKeyDown={(event) => editOnShortcut(event, "task", task.id, task.title)}
                         type="button"
                       >
-                        {visibleTitle}
+                        <EntryTitle entry={labeledTitle} />
                       </button>
                     )}
                   </h3>
@@ -378,7 +381,6 @@ export function ActivityFeed({
                         ))}
                       </select>
                     </div>
-                    <EntryLabels labels={labeledTitle.labels} />
                   </div>
                 </div>
                 <div className="task-card-actions">
@@ -509,7 +511,7 @@ export function ActivityFeed({
                       onKeyDown={(event) => editOnShortcut(event, "log", entry.id, entry.note)}
                       type="button"
                     >
-                      {visibleNote}
+                      <EntryTitle entry={labeledNote} />
                     </button>
                   )}
                   {editableEntry?.key !== `log:${entry.id}` ? (
@@ -524,7 +526,6 @@ export function ActivityFeed({
                     </button>
                   ) : null}
                 </div>
-                <EntryLabels labels={labeledNote.labels} />
               </div>
               <button
                 aria-label={`Delete work log: ${entry.note}`}

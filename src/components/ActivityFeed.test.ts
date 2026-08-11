@@ -104,16 +104,22 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain("is-current is-playing");
   });
 
-  it("renders at-labels separately from entry text", () => {
+  it("highlights at-labels inside the pressable entry title", () => {
     const labeledTask = { ...task, title: "Send the invoice @work @urgent" };
     const labeledLog = { ...log, note: "Reviewed the invoice @work" };
     const html = renderFeed([labeledTask], [labeledLog]);
+    const taskTitleStart = html.indexOf('data-notes-trigger="task:task-one"');
+    const taskTitle = html.slice(taskTitleStart, html.indexOf("</button>", taskTitleStart));
+    const logTitleStart = html.indexOf('data-notes-trigger="log:log-one"');
+    const logTitle = html.slice(logTitleStart, html.indexOf("</button>", logTitleStart));
 
-    expect(html).toContain(">Send the invoice</button>");
-    expect(html).toContain('aria-label="Labels"');
-    expect(html).toContain("<li>@work</li>");
-    expect(html).toContain("<li>@urgent</li>");
-    expect(html).not.toContain(">Send the invoice @work @urgent</button>");
+    expect(taskTitle).toContain("Send the invoice");
+    expect(taskTitle).toContain('<span class="entry-title-label">@work</span>');
+    expect(taskTitle).toContain('<span class="entry-title-label">@urgent</span>');
+    expect(logTitle).toContain("Reviewed the invoice");
+    expect(logTitle).toContain('<span class="entry-title-label">@work</span>');
+    expect(html).not.toContain('aria-label="Labels"');
+    expect(html).not.toContain("<li>@work</li>");
   });
 
   it("shows dates and sorting for completed work", () => {
