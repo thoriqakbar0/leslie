@@ -1036,20 +1036,15 @@ kbd {
   border-top: 1px solid var(--line);
 }
 
-.history-panel + .activity-group {
+.notes-history {
+  width: min(100%, 780px);
+  flex: none;
+  max-height: 190px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.history-panel {
-  width: min(100%, 564px);
-  min-height: 178px;
-  margin: 20px auto 28px;
-  padding: 16px 18px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--selected) 62%, transparent);
-}
-
-.history-panel-header {
+.notes-history-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -1057,25 +1052,25 @@ kbd {
   margin-bottom: 12px;
 }
 
-.history-panel-header h2 {
+.notes-history-header h3 {
   margin: 0;
   font: 500 17px/1.2 var(--serif);
 }
 
-.history-panel-header span {
+.notes-history-header span {
   color: var(--faint);
   font-size: 11px;
 }
 
-.history-timeline {
-  max-height: 116px;
+.notes-history-timeline {
+  max-height: 128px;
   margin: 0;
   padding: 0;
   overflow-y: auto;
   list-style: none;
 }
 
-.history-timeline li {
+.notes-history-timeline li {
   position: relative;
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr);
@@ -1083,7 +1078,7 @@ kbd {
   padding-bottom: 12px;
 }
 
-.history-timeline li:not(:last-child)::after {
+.notes-history-timeline li:not(:last-child)::after {
   position: absolute;
   top: 10px;
   bottom: 0;
@@ -1093,7 +1088,7 @@ kbd {
   content: "";
 }
 
-.history-marker {
+.notes-history-marker {
   z-index: 1;
   width: 9px;
   height: 9px;
@@ -1102,15 +1097,15 @@ kbd {
   background: var(--accent);
 }
 
-.history-timeline p,
-.history-empty {
+.notes-history-timeline p,
+.notes-history-empty {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
 }
 
-.history-timeline time {
+.notes-history-timeline time {
   display: block;
   margin-top: 2px;
   color: var(--faint);
@@ -1118,9 +1113,8 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-.history-empty {
-  padding-top: 20px;
-  text-align: center;
+.notes-history-empty {
+  padding-top: 8px;
 }
 
 .activity-group-header {

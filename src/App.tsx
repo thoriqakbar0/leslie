@@ -182,24 +182,26 @@ function App() {
             key: `task:${task.id}`,
             title: task.title,
             notes: task.notes,
+            history: document.history.filter((entry) => entry.itemId === task.id),
             target: activeNotesTarget,
           }
         : null;
     }
     const entry = document.workLog.find((candidate) => candidate.id === activeNotesTarget.id);
     return entry
-      ? { key: `log:${entry.id}`, title: entry.note, notes: entry.notes, target: activeNotesTarget }
+      ? {
+          key: `log:${entry.id}`,
+          title: entry.note,
+          notes: entry.notes,
+          history: document.history.filter((historyEntry) => historyEntry.itemId === entry.id),
+          target: activeNotesTarget,
+        }
       : null;
   }, [activeNotesTarget, document]);
   const visibleWorkLog = useMemo(() => {
     if (!document) return [];
     const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
     return document.workLog.filter((entry) => entry.createdAt >= start && entry.createdAt < end);
-  }, [anchorTimestamp, document, timeScale]);
-  const visibleHistory = useMemo(() => {
-    if (!document) return [];
-    const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
-    return document.history.filter((entry) => entry.occurredAt >= start && entry.occurredAt < end);
   }, [anchorTimestamp, document, timeScale]);
 
   if (document === null) {
@@ -331,7 +333,7 @@ function App() {
         tasks: current.tasks.filter((candidate) => candidate.id !== id),
         workLog: [
           {
-            id: createId("log"),
+            id: task.id,
             note: `Completed ${task.title}.`,
             notes: task.notes,
             createdAt,
@@ -656,7 +658,6 @@ function App() {
                 "This list"
               }
               isPlaying={isPlaying}
-              history={visibleHistory}
               onComplete={completeTask}
               onEstimateChange={changeEstimate}
               onOpenTaskNotes={(id) => openNotes({ kind: "task", id })}
@@ -678,6 +679,7 @@ function App() {
       {activeNotesEntry ? (
         <NotesSidebar
           entryTitle={activeNotesEntry.title}
+          history={activeNotesEntry.history}
           key={activeNotesEntry.key}
           notes={activeNotesEntry.notes}
           onClose={closeNotes}

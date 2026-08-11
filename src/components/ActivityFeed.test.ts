@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 import { ActivityFeed } from "./ActivityFeed";
-import type { ActivityHistoryEntry, PlannedItem, WorkLogEntry } from "../model";
+import type { PlannedItem, WorkLogEntry } from "../model";
 
 const task: PlannedItem = {
   id: "task-one",
@@ -27,12 +27,10 @@ function renderFeed(
     isPlaying: false,
     playingTaskId: null,
   },
-  history: readonly ActivityHistoryEntry[] = [],
 ) {
   return renderToStaticMarkup(
     createElement(ActivityFeed, {
       activeListName: "Inbox",
-      history,
       isPlaying: playback.isPlaying,
       playingTaskId: playback.playingTaskId,
       tasks,
@@ -140,36 +138,5 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('aria-describedby="log-metadata-log-one activity-notes-action-hint"');
     expect(html).toContain('id="log-title-log-one"');
     expect(html).toContain(">Reviewed the invoice.</button>");
-  });
-
-  it("renders a chronological history timeline", () => {
-    const history: readonly ActivityHistoryEntry[] = [
-      {
-        id: "history-old",
-        itemId: task.id,
-        type: "planned-created",
-        title: task.title,
-        occurredAt: 300,
-      },
-      {
-        id: "history-new",
-        itemId: task.id,
-        itemKind: "planned",
-        type: "title-changed",
-        previousTitle: "Draft the invoice",
-        title: task.title,
-        occurredAt: 400,
-      },
-    ];
-    const html = renderFeed([task], [], undefined, history);
-
-    expect(html).toContain(
-      '<section aria-labelledby="history-section-title" class="history-panel">',
-    );
-    expect(html).toContain("2 changes");
-    expect(html).toContain("Renamed planned from “Draft the invoice” to “Send the invoice”");
-    expect(html.indexOf("Renamed planned")).toBeLessThan(
-      html.indexOf("Planned “Send the invoice”"),
-    );
   });
 });

@@ -26,6 +26,7 @@ describe("Notes sidebar", () => {
     const html = renderToStaticMarkup(
       createElement(NotesSidebar, {
         entryTitle: "Send the invoice",
+        history: [],
         notes: "Call Leslie tomorrow.",
         onClose: () => undefined,
         onNotesChange: () => undefined,
@@ -39,6 +40,43 @@ describe("Notes sidebar", () => {
     expect(html).toContain("Write notes…");
     expect(html).not.toContain('class="notes-format-hint"');
     expect(html).toContain("Send the invoice");
+    expect(html).toContain("No changes recorded for this item yet.");
+  });
+
+  it("renders only the supplied item history in newest-first order", () => {
+    const html = renderToStaticMarkup(
+      createElement(NotesSidebar, {
+        entryTitle: "Send the invoice",
+        history: [
+          {
+            id: "history-old",
+            itemId: "task-one",
+            type: "planned-created",
+            title: "Draft the invoice",
+            occurredAt: 300,
+          },
+          {
+            id: "history-new",
+            itemId: "task-one",
+            itemKind: "planned",
+            type: "title-changed",
+            previousTitle: "Draft the invoice",
+            title: "Send the invoice",
+            occurredAt: 400,
+          },
+        ],
+        notes: "",
+        onClose: () => undefined,
+        onNotesChange: () => undefined,
+      }),
+    );
+
+    expect(html).toContain('aria-labelledby="notes-history-title"');
+    expect(html).toContain("2 changes");
+    expect(html).toContain("Renamed planned from “Draft the invoice” to “Send the invoice”");
+    expect(html.indexOf("Renamed planned")).toBeLessThan(
+      html.indexOf("Planned “Draft the invoice”"),
+    );
   });
 
   it("round-trips the supported rich-text syntax as markdown", () => {
