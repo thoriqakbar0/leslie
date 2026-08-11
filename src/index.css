@@ -110,11 +110,14 @@ button {
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  z-index: 2;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 250px;
+  min-width: 250px;
   align-self: start;
-  min-width: 0;
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 38px 32px;
@@ -304,6 +307,7 @@ button {
 
 .workspace {
   position: relative;
+  grid-column: 2;
   min-width: 0;
   padding-bottom: 72px;
 }
@@ -1779,6 +1783,8 @@ input:focus-visible {
 
   .sidebar {
     position: static;
+    width: 100%;
+    min-width: 0;
     height: auto;
     display: block;
     padding: 22px 28px 0;
@@ -1865,6 +1871,7 @@ input:focus-visible {
   }
 
   .workspace {
+    grid-column: auto;
     padding-bottom: 60px;
   }
 

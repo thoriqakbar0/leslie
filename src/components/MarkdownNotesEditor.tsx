@@ -17,7 +17,9 @@ import {
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
   INDENT_CONTENT_COMMAND,
+  KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
+  KEY_SPACE_COMMAND,
   KEY_TAB_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   PASTE_COMMAND,
@@ -29,6 +31,7 @@ import {
   NOTES_EDITOR_NODES,
   NOTES_MARKDOWN_TRANSFORMERS,
 } from "../notes-editor-config";
+import { $expandNowAtSelection } from "../notes-now";
 
 const SAVE_DELAY_MS = 200;
 
@@ -46,6 +49,40 @@ interface PersistencePluginProps {
 }
 
 const MAX_CHECKLIST_DEPTH = 4;
+
+function NowShortcutPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    function expandAtSelection(insertSpace: boolean): boolean {
+      return $expandNowAtSelection(Date.now(), insertSpace);
+    }
+
+    const unregisterSpace = editor.registerCommand(
+      KEY_SPACE_COMMAND,
+      (event) => {
+        if (!expandAtSelection(true)) return false;
+        event.preventDefault();
+        return true;
+      },
+      COMMAND_PRIORITY_HIGH,
+    );
+    const unregisterEnter = editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      () => {
+        expandAtSelection(false);
+        return false;
+      },
+      COMMAND_PRIORITY_HIGH,
+    );
+    return () => {
+      unregisterSpace();
+      unregisterEnter();
+    };
+  }, [editor]);
+
+  return null;
+}
 
 function ChecklistIndentPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -211,6 +248,7 @@ export function MarkdownNotesEditor({
       <ListPlugin />
       <CheckListPlugin />
       <ChecklistIndentPlugin />
+      <NowShortcutPlugin />
       <MarkdownShortcutPlugin transformers={NOTES_MARKDOWN_TRANSFORMERS} />
       <PersistencePlugin
         initialMarkdown={markdown}
