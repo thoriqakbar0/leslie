@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { $createParagraphNode, $createTextNode, $getRoot, createEditor } from "lexical";
-import { $expandNowAtSelection, expandNowShortcut } from "./notes-now";
+import { $exportNotesMarkdown, NOTES_EDITOR_NODES } from "./notes-editor-config";
+import { $expandNowAtSelection, $highlightClockTextNode, expandNowShortcut } from "./notes-now";
 
 describe("notes @now shortcut", () => {
   const now = new Date(2026, 7, 11, 9, 8).getTime();
@@ -22,6 +23,7 @@ describe("notes @now shortcut", () => {
   it("replaces the token and keeps typing position in a Lexical update", () => {
     const editor = createEditor({
       namespace: "NowShortcutTest",
+      nodes: NOTES_EDITOR_NODES,
       onError: (error) => {
         throw error;
       },
@@ -38,6 +40,32 @@ describe("notes @now shortcut", () => {
 
     expect(editor.getEditorState().read(() => $getRoot().getTextContent())).toBe(
       "on the way 09:08 ",
+    );
+    expect(editor.getEditorState().read($exportNotesMarkdown)).toBe("on the way `09:08`");
+  });
+
+  it("highlights an existing standalone clock without changing attached text", () => {
+    const editor = createEditor({
+      namespace: "ClockHighlightTest",
+      nodes: NOTES_EDITOR_NODES,
+      onError: (error) => {
+        throw error;
+      },
+    });
+    editor.update(
+      () => {
+        const paragraph = $createParagraphNode();
+        const clock = $createTextNode("started 09:51 now");
+        const attached = $createTextNode(" version09:51");
+        $getRoot().append(paragraph.append(clock, attached));
+        expect($highlightClockTextNode(clock)).toBe(true);
+        expect($highlightClockTextNode(attached)).toBe(false);
+      },
+      { discrete: true },
+    );
+
+    expect(editor.getEditorState().read($exportNotesMarkdown)).toBe(
+      "started `09:51` now version09:51",
     );
   });
 });

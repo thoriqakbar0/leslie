@@ -23,6 +23,7 @@ import {
   KEY_TAB_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   PASTE_COMMAND,
+  TextNode,
 } from "lexical";
 import { useCallback, useEffect, useRef } from "react";
 import {
@@ -31,7 +32,7 @@ import {
   NOTES_EDITOR_NODES,
   NOTES_MARKDOWN_TRANSFORMERS,
 } from "../notes-editor-config";
-import { $expandNowAtSelection } from "../notes-now";
+import { $expandNowAtSelection, $highlightClockTextNode } from "../notes-now";
 
 const SAVE_DELAY_MS = 200;
 
@@ -80,6 +81,14 @@ function NowShortcutPlugin() {
       unregisterEnter();
     };
   }, [editor]);
+
+  return null;
+}
+
+function ClockHighlightPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => editor.registerNodeTransform(TextNode, $highlightClockTextNode), [editor]);
 
   return null;
 }
@@ -248,6 +257,7 @@ export function MarkdownNotesEditor({
       <ListPlugin />
       <CheckListPlugin />
       <ChecklistIndentPlugin />
+      <ClockHighlightPlugin />
       <NowShortcutPlugin />
       <MarkdownShortcutPlugin transformers={NOTES_MARKDOWN_TRANSFORMERS} />
       <PersistencePlugin
