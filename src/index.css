@@ -502,20 +502,20 @@ body:has(.notes-sidebar) {
 
 .page-header {
   position: relative;
-  margin-bottom: 38px;
+  margin-bottom: 32px;
 }
 
 .time-heading {
-  min-height: 82px;
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: end;
-  justify-content: start;
-  gap: 10px;
+  min-height: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
 }
 
 .date-title {
   min-width: 0;
+  flex: 0 1 auto;
   --date-enter-offset: 0;
   animation: date-title-enter 170ms ease-out both;
 }
@@ -558,7 +558,7 @@ body:has(.notes-sidebar) {
   appearance: none;
   background: transparent;
   color: var(--ink);
-  font: 500 clamp(58px, 6vw, 82px)/0.96 var(--serif);
+  font: 500 clamp(52px, 5vw, 70px)/0.98 var(--serif);
   letter-spacing: -0.04em;
   cursor: pointer;
 }
@@ -573,13 +573,11 @@ body:has(.notes-sidebar) {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-block-end: 6px;
+  padding-block-end: 0;
 }
 
 .time-support .live-clock {
-  position: relative;
-  top: 6px;
-  font-size: 18px;
+  font-size: clamp(16px, 1.4vw, 18px);
 }
 
 .playback-bar {
@@ -704,24 +702,27 @@ body:has(.notes-sidebar) {
 
 .date-navigation-wrap {
   position: relative;
-  width: min(100%, 320px);
-  margin-top: 14px;
+  width: fit-content;
+  max-width: 100%;
+  margin-block-start: 8px;
+  margin-inline-start: -6px;
 }
 
 .date-navigation .current-date {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   min-width: 0;
   height: 36px;
   display: block;
   margin: 0;
   overflow: hidden;
-  padding-inline: 8px;
+  padding-inline: 6px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font-size: clamp(13px, 2vw, 16px);
-  text-align: center;
+  font-size: clamp(14px, 1.5vw, 16px);
+  text-align: start;
   cursor: pointer;
 }
 
@@ -1386,6 +1387,26 @@ kbd {
   color: var(--accent);
 }
 
+.entry-title-label {
+  display: inline-block;
+  margin-inline: 0.16em;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--selected);
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1.45;
+  vertical-align: 0.08em;
+}
+
+.task-notes-trigger:hover .entry-title-label,
+.log-notes-trigger:hover .entry-title-label {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
 .task-notes-trigger:focus-visible,
 .log-notes-trigger:focus-visible,
 .activity-title-editor:focus-visible {
@@ -1420,30 +1441,6 @@ kbd {
   flex-wrap: wrap;
   gap: 5px 14px;
   margin-top: 5px;
-}
-
-.entry-labels {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.entry-labels li {
-  padding: 2px 7px;
-  border-radius: 99px;
-  background: var(--selected);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-
-.activity-copy .entry-labels {
-  margin-top: 6px;
 }
 
 .task-card-metadata {
@@ -1837,11 +1834,11 @@ input:focus-visible {
   }
 
   .time-scale {
-    font-size: 60px;
+    font-size: 56px;
   }
 
   .time-heading {
-    min-height: 84px;
+    gap: 6px 12px;
   }
 }
 
@@ -1898,17 +1895,8 @@ input:focus-visible {
     grid-column: 2 / 3;
   }
 
-  .time-heading {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .time-support {
-    padding-block-end: 0;
-  }
-
   .time-scale {
-    font-size: 52px;
+    font-size: 48px;
   }
 
   .capture-box,
