@@ -313,7 +313,10 @@ function App() {
       current
         ? {
             ...current,
-            workLog: [{ id: logId, note, notes: "", createdAt }, ...current.workLog],
+            workLog: [
+              { id: logId, note, notes: "", origin: "direct", createdAt },
+              ...current.workLog,
+            ],
             history: [historyEntry, ...current.history],
           }
         : current,
@@ -336,6 +339,7 @@ function App() {
             id: task.id,
             note: `Completed ${task.title}.`,
             notes: task.notes,
+            origin: "planned",
             createdAt,
           },
           ...current.workLog,

@@ -28,6 +28,7 @@ export interface WorkLogEntry {
   readonly id: string;
   readonly note: string;
   readonly notes: string;
+  readonly origin: "direct" | "planned";
   readonly createdAt: number;
 }
 
@@ -160,18 +161,21 @@ export function createInitialState(now = new Date()): LeslieState {
         id: "log-details",
         note: "Reviewed the invoice details.",
         notes: "",
+        origin: "direct",
         createdAt: todayAt(now, 10, 42),
       },
       {
         id: "log-template",
         note: "Opened the invoice template.",
         notes: "",
+        origin: "direct",
         createdAt: todayAt(now, 10, 25),
       },
       {
         id: "log-source",
         note: "Found the last invoice.",
         notes: "",
+        origin: "direct",
         createdAt: todayAt(now, 9, 58),
       },
     ],

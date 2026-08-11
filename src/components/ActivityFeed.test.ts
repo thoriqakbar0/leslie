@@ -17,6 +17,7 @@ const log: WorkLogEntry = {
   id: "log-one",
   note: "Reviewed the invoice.",
   notes: "Follow up tomorrow.",
+  origin: "direct",
   createdAt: 200,
 };
 
@@ -125,6 +126,19 @@ describe("ActivityFeed empty states", () => {
     expect(html).not.toContain("<select");
     expect(html).toContain('class="log-date"');
     expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
+  });
+
+  it("labels work completed from planned without relying on color", () => {
+    const completedLog = {
+      ...log,
+      id: "task-one",
+      note: "Completed Send the invoice.",
+      origin: "planned" as const,
+    };
+    const html = renderFeed([], [completedLog]);
+
+    expect(html).toContain('class="activity-row log-row from-planned"');
+    expect(html).toContain("From planned");
   });
 
   it("makes completed work part of keyboard notes navigation", () => {

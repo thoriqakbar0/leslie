@@ -1264,6 +1264,11 @@ kbd {
   grid-template-columns: 126px minmax(0, 1fr) 36px;
 }
 
+.log-row.from-planned {
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+
 .task-check {
   width: 34px;
   height: 34px;
@@ -1472,6 +1477,24 @@ kbd {
   color: var(--accent);
   font-size: 11px;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.activity-kind-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.activity-kind-line .activity-kind {
+  margin-bottom: 0;
+}
+
+.planned-origin {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 

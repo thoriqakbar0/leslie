@@ -388,7 +388,7 @@ export function ActivityFeed({
             <article
               aria-describedby={metadataId}
               aria-labelledby={titleId}
-              className="activity-row log-row"
+              className={`activity-row log-row${entry.origin === "planned" ? " from-planned" : ""}`}
               data-activity-card={`log:${entry.id}`}
               key={entry.id}
             >
@@ -397,7 +397,12 @@ export function ActivityFeed({
                 <strong>{formatCompactTime(entry.createdAt)}</strong>
               </time>
               <div className="activity-copy">
-                <span className="activity-kind">Did</span>
+                <div className="activity-kind-line">
+                  <span className="activity-kind">Did</span>
+                  {entry.origin === "planned" ? (
+                    <span className="planned-origin">From planned</span>
+                  ) : null}
+                </div>
                 <p id={titleId}>
                   {editableEntry?.key === `log:${entry.id}` ? (
                     <input

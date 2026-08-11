@@ -14,7 +14,15 @@ const validState = {
       scheduledAt: 100,
     },
   ],
-  workLog: [{ id: "log-one", note: "Reviewed notes.", notes: "Follow up.", createdAt: 200 }],
+  workLog: [
+    {
+      id: "log-one",
+      note: "Reviewed notes.",
+      notes: "Follow up.",
+      origin: "direct",
+      createdAt: 200,
+    },
+  ],
   history: [
     {
       id: "history-one",
@@ -97,6 +105,25 @@ describe("Leslie state parser", () => {
       parseLeslieState({
         ...validState,
         workLog: [{ ...validState.workLog[0], notes: 42 }],
+      }),
+    ).toBeNull();
+  });
+
+  it("preserves work-log origin and infers it for legacy entries", () => {
+    const { origin: _origin, ...legacyLog } = validState.workLog[0];
+    expect(parseLeslieState({ ...validState, workLog: [legacyLog] })?.workLog[0].origin).toBe(
+      "direct",
+    );
+    expect(
+      parseLeslieState({
+        ...validState,
+        workLog: [{ ...legacyLog, note: "Completed Prepare notes." }],
+      })?.workLog[0].origin,
+    ).toBe("planned");
+    expect(
+      parseLeslieState({
+        ...validState,
+        workLog: [{ ...validState.workLog[0], origin: "unknown" }],
       }),
     ).toBeNull();
   });

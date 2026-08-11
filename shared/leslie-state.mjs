@@ -49,10 +49,18 @@ function parseWorkLogEntry(value) {
   const note = parseNonEmptyString(value.note);
   const notes =
     value.notes === undefined ? "" : typeof value.notes === "string" ? value.notes : null;
+  const origin =
+    value.origin === undefined
+      ? note?.startsWith("Completed ")
+        ? "planned"
+        : "direct"
+      : value.origin === "direct" || value.origin === "planned"
+        ? value.origin
+        : null;
   const createdAt = parseTimestamp(value.createdAt);
-  return id === null || note === null || notes === null || createdAt === null
+  return id === null || note === null || notes === null || origin === null || createdAt === null
     ? null
-    : { id, note, notes, createdAt };
+    : { id, note, notes, origin, createdAt };
 }
 
 function parseHistoryEntry(value) {
