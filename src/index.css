@@ -1236,8 +1236,10 @@ kbd {
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 45%, var(--line));
 }
 
-.planned-row:has(.task-notes-trigger:focus-visible),
-.log-row:has(.log-notes-trigger:focus-visible) {
+.activity-row:has([data-activity-navigation-target]:focus-visible),
+.activity-row:has([data-activity-editing-target]:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
@@ -1291,11 +1293,6 @@ kbd {
   cursor: pointer;
 }
 
-.task-notes-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 5px;
-}
-
 .log-notes-trigger {
   min-width: 0;
   padding: 0;
@@ -1312,9 +1309,21 @@ kbd {
   color: var(--accent);
 }
 
-.log-notes-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 5px;
+.task-notes-trigger:focus-visible,
+.log-notes-trigger:focus-visible,
+.activity-title-editor:focus-visible {
+  /* The containing activity card supplies the visible keyboard focus perimeter. */
+  outline: 0;
+}
+
+.activity-title-editor {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
 }
 
 .task-card-body,

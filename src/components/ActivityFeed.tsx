@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { parseEntryLabels } from "../entry-labels";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
 import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
@@ -18,10 +24,19 @@ interface ActivityFeedProps {
   readonly onOpenWorkLogNotes: (id: string) => void;
   readonly onRemoveTask: (id: string) => void;
   readonly onRemoveWorkLog: (id: string) => void;
+  readonly onTaskTitleChange: (id: string, title: string) => void;
   readonly onTogglePlaying: (id: string) => void;
+  readonly onWorkLogTitleChange: (id: string, title: string) => void;
 }
 
 type WorkLogSort = "newest" | "oldest";
+type EditableEntry = {
+  readonly id: string;
+  readonly key: string;
+  readonly kind: "task" | "log";
+  readonly originalTitle: string;
+  readonly title: string;
+};
 
 const workLogDateFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -78,9 +93,13 @@ export function ActivityFeed({
   onOpenWorkLogNotes,
   onRemoveTask,
   onRemoveWorkLog,
+  onTaskTitleChange,
   onTogglePlaying,
+  onWorkLogTitleChange,
 }: ActivityFeedProps) {
   const [workLogSort, setWorkLogSort] = useState<WorkLogSort>("newest");
+  const [editableEntry, setEditableEntry] = useState<EditableEntry | null>(null);
+  const isFinishingEdit = useRef(false);
   const sortedWorkLog = useMemo(
     () =>
       [...workLog].sort((left, right) =>
@@ -90,6 +109,51 @@ export function ActivityFeed({
       ),
     [workLog, workLogSort],
   );
+
+  function startEditing(kind: EditableEntry["kind"], id: string, title: string) {
+    isFinishingEdit.current = false;
+    setEditableEntry({ id, key: `${kind}:${id}`, kind, originalTitle: title, title });
+  }
+
+  function finishEditing(save: boolean, restoreFocus: boolean) {
+    if (editableEntry === null || isFinishingEdit.current) return;
+    isFinishingEdit.current = true;
+    const targetKey = editableEntry.key;
+    const title = editableEntry.title.trim();
+    if (save && title.length > 0 && title !== editableEntry.originalTitle) {
+      if (editableEntry.kind === "task") onTaskTitleChange(editableEntry.id, title);
+      else onWorkLogTitleChange(editableEntry.id, title);
+    }
+    setEditableEntry(null);
+    if (!restoreFocus) return;
+    globalThis.requestAnimationFrame(() => {
+      const triggers = globalThis.document.querySelectorAll<HTMLElement>("[data-notes-trigger]");
+      for (const trigger of triggers) {
+        if (trigger.dataset.notesTrigger !== targetKey) continue;
+        trigger.focus();
+        break;
+      }
+    });
+  }
+
+  function editOnShortcut(
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    kind: EditableEntry["kind"],
+    id: string,
+    title: string,
+  ) {
+    if (
+      event.key.toLowerCase() !== "e" ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    startEditing(kind, id, title);
+  }
 
   useEffect(() => {
     function navigateActivity(event: KeyboardEvent) {
@@ -160,12 +224,12 @@ export function ActivityFeed({
           {tasks.length + workLog.length > 0 ? (
             <p id="activity-navigation-hint">
               <kbd>j</kbd>/<kbd>k</kbd> move <span aria-hidden="true">·</span> <kbd>enter</kbd>{" "}
-              opens notes
+              notes <span aria-hidden="true">·</span> <kbd>e</kbd> edit
             </p>
           ) : null}
         </header>
         <span className="visually-hidden" id="activity-notes-action-hint">
-          Opens notes for this activity.
+          Opens notes for this activity. Press E to edit its title.
         </span>
 
         {tasks.length === 0 ? (
@@ -205,16 +269,36 @@ export function ActivityFeed({
                 />
                 <div className="task-card-body">
                   <h3 className="task-title-line" id={titleId}>
-                    <button
-                      aria-describedby={`${metadataId} activity-notes-action-hint`}
-                      className="task-notes-trigger"
-                      data-activity-navigation-target=""
-                      data-notes-trigger={`task:${task.id}`}
-                      onClick={() => onOpenTaskNotes(task.id)}
-                      type="button"
-                    >
-                      {visibleTitle}
-                    </button>
+                    {editableEntry?.key === `task:${task.id}` ? (
+                      <input
+                        aria-label={`Edit title: ${visibleTitle}`}
+                        autoFocus
+                        className="activity-title-editor"
+                        data-activity-editing-target=""
+                        onBlur={() => finishEditing(true, false)}
+                        onChange={(event) =>
+                          setEditableEntry({ ...editableEntry, title: event.target.value })
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") finishEditing(true, true);
+                          if (event.key === "Escape") finishEditing(false, true);
+                        }}
+                        value={editableEntry.title}
+                      />
+                    ) : (
+                      <button
+                        aria-describedby={`${metadataId} activity-notes-action-hint`}
+                        aria-keyshortcuts="Enter E"
+                        className="task-notes-trigger"
+                        data-activity-navigation-target=""
+                        data-notes-trigger={`task:${task.id}`}
+                        onClick={() => onOpenTaskNotes(task.id)}
+                        onKeyDown={(event) => editOnShortcut(event, "task", task.id, task.title)}
+                        type="button"
+                      >
+                        {visibleTitle}
+                      </button>
+                    )}
                   </h3>
                   <div className="task-card-details">
                     <p className="task-card-metadata" id={metadataId}>
@@ -315,16 +399,36 @@ export function ActivityFeed({
               <div className="activity-copy">
                 <span className="activity-kind">Did</span>
                 <p id={titleId}>
-                  <button
-                    aria-describedby={`${metadataId} activity-notes-action-hint`}
-                    className="log-notes-trigger"
-                    data-activity-navigation-target=""
-                    data-notes-trigger={`log:${entry.id}`}
-                    onClick={() => onOpenWorkLogNotes(entry.id)}
-                    type="button"
-                  >
-                    {visibleNote}
-                  </button>
+                  {editableEntry?.key === `log:${entry.id}` ? (
+                    <input
+                      aria-label={`Edit title: ${visibleNote}`}
+                      autoFocus
+                      className="activity-title-editor"
+                      data-activity-editing-target=""
+                      onBlur={() => finishEditing(true, false)}
+                      onChange={(event) =>
+                        setEditableEntry({ ...editableEntry, title: event.target.value })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") finishEditing(true, true);
+                        if (event.key === "Escape") finishEditing(false, true);
+                      }}
+                      value={editableEntry.title}
+                    />
+                  ) : (
+                    <button
+                      aria-describedby={`${metadataId} activity-notes-action-hint`}
+                      aria-keyshortcuts="Enter E"
+                      className="log-notes-trigger"
+                      data-activity-navigation-target=""
+                      data-notes-trigger={`log:${entry.id}`}
+                      onClick={() => onOpenWorkLogNotes(entry.id)}
+                      onKeyDown={(event) => editOnShortcut(event, "log", entry.id, entry.note)}
+                      type="button"
+                    >
+                      {visibleNote}
+                    </button>
+                  )}
                 </p>
                 <EntryLabels labels={labeledNote.labels} />
               </div>

@@ -349,6 +349,32 @@ function App() {
     );
   }
 
+  function changeTaskTitle(id: string, title: string) {
+    setDocument((current) =>
+      current
+        ? {
+            ...current,
+            tasks: current.tasks.map((task) =>
+              task.id === id && task.title !== title ? { ...task, title } : task,
+            ),
+          }
+        : current,
+    );
+  }
+
+  function changeWorkLogTitle(id: string, title: string) {
+    setDocument((current) =>
+      current
+        ? {
+            ...current,
+            workLog: current.workLog.map((entry) =>
+              entry.id === id && entry.note !== title ? { ...entry, note: title } : entry,
+            ),
+          }
+        : current,
+    );
+  }
+
   function openNotes(target: NotesTarget) {
     setIsDatePickerOpen(false);
     setActiveNotesTarget(target);
@@ -621,7 +647,9 @@ function App() {
               onOpenWorkLogNotes={(id) => openNotes({ kind: "log", id })}
               onRemoveTask={removeTask}
               onRemoveWorkLog={removeWorkLog}
+              onTaskTitleChange={changeTaskTitle}
               onTogglePlaying={togglePlaying}
+              onWorkLogTitleChange={changeWorkLogTitle}
               playingTaskId={playingTaskId}
               tasks={visibleTasks}
               timeScale={timeScale}
