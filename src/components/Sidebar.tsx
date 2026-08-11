@@ -12,7 +12,7 @@ interface SidebarProps {
   readonly onSelectList: (id: string) => void;
 }
 
-/** Render Leslie's list switcher and inline list creator. */
+/** Render Leslie's folder switcher and inline folder creator. */
 export function Sidebar({
   activeListId,
   lists,
@@ -54,7 +54,8 @@ export function Sidebar({
         <img alt="" height={329} src={leslieMarkUrl} width={512} />
         <span translate="no">Leslie</span>
       </div>
-      <nav aria-label="Lists">
+      <nav aria-label="Folders">
+        <p className="sidebar-section-label">Folders</p>
         {lists.map((list) => {
           const isActive = activeListId === list.id;
           return (
@@ -68,7 +69,7 @@ export function Sidebar({
                   }}
                 >
                   <label className="visually-hidden" htmlFor={`list-name-${list.id}`}>
-                    List name
+                    Folder name
                   </label>
                   <input
                     autoFocus
@@ -94,12 +95,20 @@ export function Sidebar({
                     title="Double-click to rename"
                     type="button"
                   >
-                    {list.name}
+                    <svg
+                      aria-hidden="true"
+                      className="folder-icon"
+                      focusable="false"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M3 7.5h6l2 2h10v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.5Zm0 0v-1.5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1.5" />
+                    </svg>
+                    <span>{list.name}</span>
                   </button>
                   {isActive && lists.length > 1 ? (
                     <div className="list-actions">
                       <button
-                        aria-label={`Delete ${list.name}`}
+                        aria-label={`Delete folder ${list.name}`}
                         className="delete-list"
                         onClick={() => onDeleteList(list.id)}
                         type="button"
@@ -116,27 +125,28 @@ export function Sidebar({
         {isAdding ? (
           <form className="new-list" onSubmit={submitNewList}>
             <label className="visually-hidden" htmlFor="new-list-name">
-              New list name
+              New folder name
             </label>
             <input
               autoFocus
               id="new-list-name"
               onChange={(event) => setNewListName(event.target.value)}
-              placeholder="List name"
+              placeholder="Folder name"
               value={newListName}
             />
-            <button aria-label="Create list" className="new-list-submit" type="submit">
+            <button aria-label="Create folder" className="new-list-submit" type="submit">
               +
             </button>
           </form>
         ) : (
           <button
-            aria-label="Add list"
+            aria-label="Add folder"
             className="add-list"
             onClick={() => setIsAdding(true)}
             type="button"
           >
-            +
+            <span aria-hidden="true">+</span>
+            <span>New folder</span>
           </button>
         )}
       </nav>

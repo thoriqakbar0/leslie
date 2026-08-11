@@ -46,7 +46,7 @@ function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
-/** Compose Leslie's persistent list and work-log interface. */
+/** Compose Leslie's persistent folder and work-log interface. */
 function App() {
   const [document, setDocument] = useState<LeslieState | null>(null);
   const [timeScale, setTimeScale] = useState<TimeScale>("day");
@@ -54,7 +54,7 @@ function App() {
   const [dateMotionDirection, setDateMotionDirection] = useState<DateMotionDirection>("reset");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activeNotesTarget, setActiveNotesTarget] = useState<NotesTarget | null>(null);
-  const [entryMode, setEntryMode] = useState<EntryMode>("did");
+  const [entryMode, setEntryMode] = useState<EntryMode>("planned");
   const [playingTaskId, setPlayingTaskId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -672,7 +672,7 @@ function App() {
             <ActivityFeed
               activeListName={
                 document.lists.find((list) => list.id === document.activeListId)?.name ??
-                "This list"
+                "This folder"
               }
               isPlaying={isPlaying}
               onComplete={completeTask}
@@ -708,7 +708,7 @@ function App() {
       {removedItem ? (
         <div className="toast" role="status">
           {removedItem.kind === "list"
-            ? "List removed"
+            ? "Folder removed"
             : removedItem.kind === "log"
               ? "Work log removed"
               : "Planned item removed"}

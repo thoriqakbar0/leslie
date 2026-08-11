@@ -20,6 +20,11 @@ describe("Sidebar brand", () => {
     expect(html).toContain('height="329"');
     expect(html).toContain('width="512"');
     expect(html).toContain('translate="no">Leslie</span>');
+    expect(html).toContain('aria-label="Folders"');
+    expect(html).toContain('class="sidebar-section-label">Folders</p>');
+    expect(html).toContain('class="folder-icon"');
+    expect(html).toContain('aria-label="Add folder"');
+    expect(html).toContain("New folder");
     expect(html).toContain('title="Double-click to rename"');
     expect(html).not.toContain('aria-label="Rename Inbox"');
     expect(html).not.toContain(">Notes</button>");

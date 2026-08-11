@@ -140,6 +140,15 @@ button {
   display: grid;
 }
 
+.sidebar-section-label {
+  margin: 0 12px 8px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .list-row {
   position: relative;
   display: grid;
@@ -150,12 +159,33 @@ button {
 
 .list-select {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 0 12px;
   border: 0;
   background: transparent;
   text-align: left;
   font-size: 17px;
   cursor: text;
+}
+
+.folder-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.list-select span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-row:hover .list-select,
@@ -221,13 +251,21 @@ button {
 
 .sidebar nav > .add-list {
   height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 0 12px;
   border: 0;
   background: transparent;
   text-align: left;
   color: var(--faint);
-  font-size: 25px;
+  font-size: 15px;
   cursor: pointer;
+}
+
+.sidebar nav > .add-list span[aria-hidden="true"] {
+  font-size: 25px;
+  line-height: 1;
 }
 
 .new-list {
@@ -877,10 +915,9 @@ body:has(.notes-sidebar) {
 }
 
 .capture-box {
-  min-height: 72px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 13px;
@@ -891,38 +928,39 @@ body:has(.notes-sidebar) {
   transition-timing-function: ease-out;
 }
 
-.capture-box.planned {
-  grid-template-columns: auto minmax(0, 1fr) 106px 86px;
-}
-
 .capture-box:focus-within {
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--faint) 32%, transparent),
     0 2px 5px color-mix(in srgb, var(--shadow-popover) 18%, transparent);
 }
 
-.capture-mode {
-  z-index: 1;
-  grid-column: 1;
-  grid-row: 1;
-  align-self: stretch;
+.capture-actions {
   display: flex;
   align-items: center;
-  padding: 0;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.capture-options {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .entry-mode-switch {
-  width: 100%;
-  min-width: 76px;
-  height: 100%;
+  min-width: 72px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding-inline: 15px;
+  padding-inline: 13px;
   border: 0;
-  border-radius: 12px 0 0 12px;
-  background: transparent;
+  border-radius: 7px;
+  background: var(--selected);
   color: var(--muted);
   font-size: 12px;
   font-weight: 500;
@@ -952,18 +990,15 @@ body:has(.notes-sidebar) {
 }
 
 .capture-box input {
-  grid-column: 1 / 3;
-  grid-row: 1;
+  width: 100%;
   min-width: 0;
-  height: 65px;
-  margin-inline-start: 5px;
-  padding-block: 0;
-  padding-inline: 104px 21px;
+  height: 76px;
+  padding: 5px 22px 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 18px;
+  font: 400 21px/1.35 var(--serif);
 }
 
 .capture-box select {
@@ -988,10 +1023,8 @@ body:has(.notes-sidebar) {
 }
 
 .capture-submit {
-  align-self: center;
-  min-width: 72px;
-  height: 56px;
-  margin-inline-end: 7px;
+  min-width: 76px;
+  height: 44px;
   padding: 0 18px;
   border: 0;
   border-radius: 6px;
@@ -1124,7 +1157,6 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border-bottom: 1px solid var(--line);
 }
 
 .activity-group-header h2 {
@@ -1761,8 +1793,18 @@ input:focus-visible {
 
   .sidebar nav {
     display: flex;
+    align-items: center;
     gap: 30px;
     overflow-x: auto;
+  }
+
+  .sidebar-section-label {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    flex: none;
+    margin: 0;
+    background: var(--paper);
   }
 
   .notes-sidebar {
@@ -1793,8 +1835,9 @@ input:focus-visible {
   }
 
   .sidebar nav > .add-list {
-    width: 32px;
-    font-size: 22px;
+    width: auto;
+    flex: none;
+    font-size: 14px;
   }
 
   .list-row.active::before {
@@ -1901,39 +1944,25 @@ input:focus-visible {
 
   .capture-box,
   .capture-box.planned {
-    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 126px;
   }
 
-  .capture-mode {
-    grid-column: 1 / -1;
-    grid-row: auto;
-    height: 44px;
-    padding: 10px 10px 0;
+  .capture-actions {
+    gap: 8px;
   }
 
   .entry-mode-switch {
-    width: auto;
-    height: 34px;
-    border-radius: 8px;
+    height: 40px;
   }
 
   .capture-box input {
-    grid-column: 1;
-    grid-row: auto;
-    height: 58px;
-    margin-inline-start: 0;
-    padding-inline: 14px;
-    font-size: 16px;
-  }
-
-  .capture-box.planned input {
-    grid-column: 1 / -1;
-    border-bottom: 1px solid var(--line);
+    height: 72px;
+    padding-inline: 16px;
+    font-size: 18px;
   }
 
   .capture-box select {
-    width: 100%;
-    padding-left: 14px;
+    width: 88px;
   }
 
   .capture-submit {

@@ -25,7 +25,7 @@ interface CaptureComposerProps {
   readonly planningReference: Date;
 }
 
-/** Render one keyboard-first composer for planned work and completed work. */
+/** Render one post-first composer for tasks and completed work. */
 export function CaptureComposer({
   captureInputRef,
   mode,
@@ -48,6 +48,9 @@ export function CaptureComposer({
     onModeChange(mode === "planned" ? "did" : "planned");
     focusCaptureInput();
   }, [focusCaptureInput, mode, onModeChange]);
+
+  const postType = mode === "planned" ? "task" : "work log";
+  const nextPostType = mode === "planned" ? "work log" : "task";
 
   useLayoutEffect(() => {
     const selection = pendingSelection.current;
@@ -145,25 +148,10 @@ export function CaptureComposer({
   }
 
   return (
-    <section className="capture-section" aria-label="Quick capture">
+    <section className="capture-section" aria-label="Post a task or work log">
       <form className={`capture-box ${mode}`} onSubmit={submit}>
-        <div className="capture-mode">
-          <button
-            aria-keyshortcuts="Meta+Shift+M"
-            aria-label={`Entry type: ${mode}. Switch to ${mode === "planned" ? "did" : "planned"}`}
-            className="entry-mode-switch"
-            onClick={switchEntryMode}
-            type="button"
-          >
-            <span aria-hidden="true">{mode === "planned" ? "Planned" : "Did"}</span>
-            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-              <path d="m16 3 4 4-4 4m4-4H4m4 14-4-4 4-4m-4 4h16" />
-            </svg>
-          </button>
-        </div>
-
         <label className="visually-hidden" htmlFor="capture-input">
-          {mode === "did" ? "What did you do?" : "What do you plan to do?"}
+          {mode === "did" ? "What did you get done?" : "What needs doing?"}
         </label>
         <input
           aria-describedby="capture-hint"
@@ -197,44 +185,61 @@ export function CaptureComposer({
               event.currentTarget.blur();
             }
           }}
-          placeholder={mode === "did" ? "e.g. Reviewed the invoice…" : "e.g. Call at 8:30…"}
+          placeholder={mode === "did" ? "What did you get done?" : "What needs doing?"}
           ref={captureInputRef}
           type="text"
           value={text}
         />
 
-        {mode === "planned" ? (
-          <>
-            <label className="visually-hidden" htmlFor="capture-estimate">
-              Expected time
-            </label>
-            <select
-              id="capture-estimate"
-              onChange={(event) => {
-                const estimate = parseEstimate(event.target.value);
-                if (estimate !== null) setEstimatedMinutes(estimate);
-              }}
-              value={estimatedMinutes}
+        <div className="capture-actions">
+          <div className="capture-options">
+            <button
+              aria-keyshortcuts="Meta+Shift+M"
+              aria-label={`Post type: ${postType}. Switch to ${nextPostType}`}
+              className="entry-mode-switch"
+              onClick={switchEntryMode}
+              type="button"
             >
-              {ESTIMATE_OPTIONS.map((estimate) => (
-                <option key={estimate} value={estimate}>
-                  {formatDuration(estimate)}
-                </option>
-              ))}
-            </select>
-          </>
-        ) : null}
+              <span aria-hidden="true">{mode === "planned" ? "Task" : "Work log"}</span>
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="m16 3 4 4-4 4m4-4H4m4 14-4-4 4-4m-4 4h16" />
+              </svg>
+            </button>
 
-        <button className="capture-submit" type="submit">
-          Add
-        </button>
+            {mode === "planned" ? (
+              <>
+                <label className="visually-hidden" htmlFor="capture-estimate">
+                  Expected time
+                </label>
+                <select
+                  id="capture-estimate"
+                  onChange={(event) => {
+                    const estimate = parseEstimate(event.target.value);
+                    if (estimate !== null) setEstimatedMinutes(estimate);
+                  }}
+                  value={estimatedMinutes}
+                >
+                  {ESTIMATE_OPTIONS.map((estimate) => (
+                    <option key={estimate} value={estimate}>
+                      {formatDuration(estimate)}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
+          </div>
+
+          <button className="capture-submit" type="submit">
+            Post
+          </button>
+        </div>
       </form>
       <p className="capture-hint" id="capture-hint">
         <kbd>c</kbd> focus <span aria-hidden="true">·</span> <kbd>esc</kbd> unfocus
         <span aria-hidden="true"> · </span>
-        <kbd>enter</kbd> add
+        <kbd>enter</kbd> post
         <span aria-hidden="true"> · </span>
-        <kbd>⌘⇧M</kbd> switches entry type
+        <kbd>⌘⇧M</kbd> switches post type
         {mode === "planned" ? (
           <>
             {" "}

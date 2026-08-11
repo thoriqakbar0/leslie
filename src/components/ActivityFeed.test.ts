@@ -56,7 +56,7 @@ describe("ActivityFeed empty states", () => {
     const html = renderFeed([], []);
 
     expect(html).toContain("Nothing here yet.");
-    expect(html).toContain("Use Did or Planned above when you want to add something.");
+    expect(html).toContain("Post a task above when you want to add something.");
     expect(html).not.toContain("No planned items");
   });
 

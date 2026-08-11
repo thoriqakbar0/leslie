@@ -260,7 +260,7 @@ export function ActivityFeed({
       <section className="activity-feed activity-feed-empty" aria-label="Activity">
         <div className="empty-state">
           <strong>Nothing here yet.</strong>
-          <p>Use Did or Planned above when you want to add something.</p>
+          <p>Post a task above when you want to add something.</p>
         </div>
       </section>
     );

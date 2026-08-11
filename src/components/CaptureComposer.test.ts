@@ -8,7 +8,7 @@ function renderComposer() {
   return renderToStaticMarkup(
     createElement(CaptureComposer, {
       captureInputRef,
-      mode: "did",
+      mode: "planned",
       onAddPlanned: () => undefined,
       onAddWorkLog: () => undefined,
       onModeChange: () => undefined,
@@ -19,19 +19,19 @@ function renderComposer() {
 }
 
 describe("CaptureComposer keyboard access", () => {
-  it("exposes one button for switching the current entry mode", () => {
+  it("puts task writing before secondary post controls", () => {
     const html = renderComposer();
     const switchIndex = html.indexOf('class="entry-mode-switch"');
     const inputIndex = html.indexOf('id="capture-input"');
-    const addIndex = html.indexOf(">Add</button>");
+    const postIndex = html.indexOf(">Post</button>");
 
     expect(switchIndex).toBeGreaterThan(-1);
-    expect(switchIndex).toBeLessThan(inputIndex);
-    expect(inputIndex).toBeLessThan(addIndex);
+    expect(inputIndex).toBeLessThan(switchIndex);
+    expect(switchIndex).toBeLessThan(postIndex);
     expect(html).toContain('aria-keyshortcuts="Meta+Shift+M"');
-    expect(html).toContain('aria-label="Entry type: did. Switch to planned"');
-    expect(html).toContain(">Did</span>");
-    expect(html).not.toContain(">Planned</span>");
+    expect(html).toContain('aria-label="Post type: task. Switch to work log"');
+    expect(html).toContain(">Task</span>");
+    expect(html).toContain('placeholder="What needs doing?"');
   });
 
   it("describes native keyboard traversal from the named input", () => {
@@ -43,6 +43,7 @@ describe("CaptureComposer keyboard access", () => {
     expect(html).toContain('autofocus=""');
     expect(html).toContain("<kbd>c</kbd> focus");
     expect(html).toContain("<kbd>esc</kbd> unfocus");
-    expect(html).toContain("<kbd>⌘⇧M</kbd> switches entry type");
+    expect(html).toContain("<kbd>enter</kbd> post");
+    expect(html).toContain("<kbd>⌘⇧M</kbd> switches post type");
   });
 });
