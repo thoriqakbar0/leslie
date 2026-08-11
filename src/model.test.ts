@@ -9,6 +9,7 @@ import {
   restoreWorkLogEntry,
   timeScaleHeading,
   timeScaleRange,
+  timestampAtClockTime,
   timestampOnDate,
 } from "./model";
 import type { WorkLogEntry } from "./model";
@@ -75,6 +76,14 @@ describe("time formatting", () => {
 
   it("uses 24-hour time with seconds for the live clock", () => {
     expect(formatClockTime(evening)).toBe("18:05:07");
+  });
+
+  it("changes a work-log clock while preserving its local date", () => {
+    expect(timestampAtClockTime(evening.getTime(), "08:09")).toBe(
+      new Date(2026, 7, 10, 8, 9).getTime(),
+    );
+    expect(timestampAtClockTime(evening.getTime(), "24:00")).toBeNull();
+    expect(timestampAtClockTime(evening.getTime(), "8:09")).toBeNull();
   });
 });
 

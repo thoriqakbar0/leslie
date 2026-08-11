@@ -204,6 +204,16 @@ export function restoreWorkLogEntry(
   return [...workLog, entry].sort((left, right) => right.createdAt - left.createdAt);
 }
 
+/** Apply a 24-hour clock value to the local calendar date of a timestamp. */
+export function timestampAtClockTime(timestamp: number, clockTime: string): number | null {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(clockTime);
+  if (!Number.isSafeInteger(timestamp) || timestamp < 0 || match === null) return null;
+  const date = new Date(timestamp);
+  date.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  const result = date.getTime();
+  return Number.isSafeInteger(result) && result >= 0 ? result : null;
+}
+
 /** Parse an expected-time form value. */
 export function parseEstimate(value: string): EstimateMinutes | null {
   switch (Number(value)) {

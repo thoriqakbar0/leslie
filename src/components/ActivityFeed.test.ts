@@ -45,6 +45,7 @@ function renderFeed(
       onRemoveWorkLog: () => undefined,
       onTaskTitleChange: () => undefined,
       onTogglePlaying: () => undefined,
+      onWorkLogTimeChange: () => undefined,
       onWorkLogTitleChange: () => undefined,
     }),
   );
@@ -86,7 +87,7 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('aria-labelledby="task-title-task-one"');
     expect(html).toContain('aria-describedby="task-metadata-task-one"');
     expect(html).toContain('<h2 id="planned-section-title">Planned</h2>');
-    expect(html).toContain('<h2 id="did-section-title">Did</h2>');
+    expect(html).toContain('<h2 id="timeline-section-title">Timeline</h2>');
     expect(html).toContain('<h3 class="task-title-line" id="task-title-task-one">');
     expect(html).toContain(">Send the invoice</button>");
     expect(html).toContain("Expected<span");
@@ -125,6 +126,9 @@ describe("ActivityFeed empty states", () => {
     expect(html).toContain('title="Newest first"');
     expect(html).not.toContain("<select");
     expect(html).toContain('class="log-date"');
+    expect(html).toContain('class="timeline-marker"');
+    expect(html).toContain('aria-label="Edit time:');
+    expect(html).toContain('aria-label="Edit title: Reviewed the invoice."');
     expect(html.indexOf("Sent the invoice.")).toBeLessThan(html.indexOf("Reviewed the invoice."));
   });
 

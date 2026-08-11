@@ -431,6 +431,19 @@ function App() {
     });
   }
 
+  function changeWorkLogTime(id: string, createdAt: number) {
+    setDocument((current) =>
+      !current
+        ? current
+        : {
+            ...current,
+            workLog: current.workLog.map((entry) =>
+              entry.id === id && entry.createdAt !== createdAt ? { ...entry, createdAt } : entry,
+            ),
+          },
+    );
+  }
+
   function openNotes(target: NotesTarget) {
     setIsDatePickerOpen(false);
     setActiveNotesTarget(target);
@@ -670,6 +683,7 @@ function App() {
               onRemoveWorkLog={removeWorkLog}
               onTaskTitleChange={changeTaskTitle}
               onTogglePlaying={togglePlaying}
+              onWorkLogTimeChange={changeWorkLogTime}
               onWorkLogTitleChange={changeWorkLogTitle}
               playingTaskId={playingTaskId}
               tasks={visibleTasks}

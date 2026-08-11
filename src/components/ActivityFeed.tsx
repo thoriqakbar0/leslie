@@ -7,7 +7,13 @@ import {
 } from "react";
 import { parseEntryLabels } from "../entry-labels";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
-import { ESTIMATE_OPTIONS, formatCompactTime, formatDuration, parseEstimate } from "../model";
+import {
+  ESTIMATE_OPTIONS,
+  formatCompactTime,
+  formatDuration,
+  parseEstimate,
+  timestampAtClockTime,
+} from "../model";
 import type { EstimateMinutes, PlannedItem, TimeScale, WorkLogEntry } from "../model";
 import { taskNavigationIndex } from "../task-navigation";
 
@@ -26,6 +32,7 @@ interface ActivityFeedProps {
   readonly onRemoveWorkLog: (id: string) => void;
   readonly onTaskTitleChange: (id: string, title: string) => void;
   readonly onTogglePlaying: (id: string) => void;
+  readonly onWorkLogTimeChange: (id: string, createdAt: number) => void;
   readonly onWorkLogTitleChange: (id: string, title: string) => void;
 }
 
@@ -36,6 +43,12 @@ type EditableEntry = {
   readonly kind: "task" | "log";
   readonly originalTitle: string;
   readonly title: string;
+};
+type EditableTime = {
+  readonly id: string;
+  readonly originalValue: string;
+  readonly timestamp: number;
+  readonly value: string;
 };
 
 const workLogDateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -68,6 +81,15 @@ function WorkLogSortIcon({ sort }: { readonly sort: WorkLogSort }) {
   );
 }
 
+function EditIcon() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20">
+      <path d="m4.5 14.8.8-3.3 7.9-7.9 3.2 3.2-7.9 7.9-3.3.8Z" />
+      <path d="m11.9 4.9 3.2 3.2" />
+    </svg>
+  );
+}
+
 function EntryLabels({ labels }: { readonly labels: readonly string[] }) {
   if (labels.length === 0) return null;
   return (
@@ -95,11 +117,14 @@ export function ActivityFeed({
   onRemoveWorkLog,
   onTaskTitleChange,
   onTogglePlaying,
+  onWorkLogTimeChange,
   onWorkLogTitleChange,
 }: ActivityFeedProps) {
   const [workLogSort, setWorkLogSort] = useState<WorkLogSort>("newest");
   const [editableEntry, setEditableEntry] = useState<EditableEntry | null>(null);
+  const [editableTime, setEditableTime] = useState<EditableTime | null>(null);
   const isFinishingEdit = useRef(false);
+  const isFinishingTimeEdit = useRef(false);
   const sortedWorkLog = useMemo(
     () =>
       [...workLog].sort((left, right) =>
@@ -153,6 +178,30 @@ export function ActivityFeed({
     }
     event.preventDefault();
     startEditing(kind, id, title);
+  }
+
+  function startTimeEditing(entry: WorkLogEntry) {
+    const value = formatCompactTime(entry.createdAt);
+    isFinishingTimeEdit.current = false;
+    setEditableTime({ id: entry.id, originalValue: value, timestamp: entry.createdAt, value });
+  }
+
+  function finishTimeEditing(save: boolean, restoreFocus: boolean) {
+    if (editableTime === null || isFinishingTimeEdit.current) return;
+    isFinishingTimeEdit.current = true;
+    const { id, originalValue, timestamp, value } = editableTime;
+    const nextTimestamp = timestampAtClockTime(timestamp, value);
+    if (save && value !== originalValue && nextTimestamp !== null) {
+      onWorkLogTimeChange(id, nextTimestamp);
+    }
+    setEditableTime(null);
+    if (!restoreFocus) return;
+    globalThis.requestAnimationFrame(() => {
+      const trigger = globalThis.document.querySelector<HTMLElement>(
+        `[data-time-trigger="${CSS.escape(id)}"]`,
+      );
+      trigger?.focus();
+    });
   }
 
   useEffect(() => {
@@ -362,9 +411,9 @@ export function ActivityFeed({
         Press to switch between playing and paused.
       </span>
 
-      <section aria-labelledby="did-section-title" className="activity-group">
+      <section aria-labelledby="timeline-section-title" className="activity-group timeline-group">
         <header className="activity-group-header did-header">
-          <h2 id="did-section-title">Did</h2>
+          <h2 id="timeline-section-title">Timeline</h2>
           {workLog.length > 1 ? (
             <button
               aria-label={`Sort completed work. ${workLogSort === "newest" ? "Newest first" : "Oldest first"}. Switch to ${workLogSort === "newest" ? "oldest" : "newest"} first`}
@@ -392,24 +441,52 @@ export function ActivityFeed({
               data-activity-card={`log:${entry.id}`}
               key={entry.id}
             >
-              <time className="log-date" dateTime={entryDate.toISOString()} id={metadataId}>
+              <div className="log-date" id={metadataId}>
                 <span>{workLogDateFormatter.format(entryDate)}</span>
-                <strong>{formatCompactTime(entry.createdAt)}</strong>
-              </time>
+                {editableTime?.id === entry.id ? (
+                  <input
+                    aria-label={`Edit time for ${visibleNote}`}
+                    autoFocus
+                    className="log-time-editor"
+                    onBlur={() => finishTimeEditing(true, false)}
+                    onChange={(event) =>
+                      setEditableTime({ ...editableTime, value: event.target.value })
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") finishTimeEditing(true, true);
+                      if (event.key === "Escape") finishTimeEditing(false, true);
+                    }}
+                    step="60"
+                    type="time"
+                    value={editableTime.value}
+                  />
+                ) : (
+                  <button
+                    aria-label={`Edit time: ${formatCompactTime(entry.createdAt)}`}
+                    className="log-time-trigger"
+                    data-time-trigger={entry.id}
+                    onClick={() => startTimeEditing(entry)}
+                    type="button"
+                  >
+                    {formatCompactTime(entry.createdAt)}
+                  </button>
+                )}
+              </div>
+              <span aria-hidden="true" className="timeline-marker" />
               <div className="activity-copy">
-                <div className="activity-kind-line">
-                  <span className="activity-kind">Did</span>
-                  {entry.origin === "planned" ? (
+                {entry.origin === "planned" ? (
+                  <div className="activity-kind-line">
                     <span className="planned-origin">From planned</span>
-                  ) : null}
-                </div>
-                <p id={titleId}>
+                  </div>
+                ) : null}
+                <div className="log-title-line">
                   {editableEntry?.key === `log:${entry.id}` ? (
                     <input
                       aria-label={`Edit title: ${visibleNote}`}
                       autoFocus
                       className="activity-title-editor"
                       data-activity-editing-target=""
+                      id={titleId}
                       onBlur={() => finishEditing(true, false)}
                       onChange={(event) =>
                         setEditableEntry({ ...editableEntry, title: event.target.value })
@@ -427,6 +504,7 @@ export function ActivityFeed({
                       className="log-notes-trigger"
                       data-activity-navigation-target=""
                       data-notes-trigger={`log:${entry.id}`}
+                      id={titleId}
                       onClick={() => onOpenWorkLogNotes(entry.id)}
                       onKeyDown={(event) => editOnShortcut(event, "log", entry.id, entry.note)}
                       type="button"
@@ -434,7 +512,18 @@ export function ActivityFeed({
                       {visibleNote}
                     </button>
                   )}
-                </p>
+                  {editableEntry?.key !== `log:${entry.id}` ? (
+                    <button
+                      aria-label={`Edit title: ${visibleNote}`}
+                      className="log-title-edit"
+                      onClick={() => startEditing("log", entry.id, entry.note)}
+                      title="Edit title"
+                      type="button"
+                    >
+                      <EditIcon />
+                    </button>
+                  ) : null}
+                </div>
                 <EntryLabels labels={labeledNote.labels} />
               </div>
               <button
