@@ -28,7 +28,7 @@ describe("CaptureComposer keyboard access", () => {
     expect(switchIndex).toBeGreaterThan(-1);
     expect(inputIndex).toBeLessThan(switchIndex);
     expect(switchIndex).toBeLessThan(postIndex);
-    expect(html).toContain('aria-keyshortcuts="Meta+Shift+M"');
+    expect(html).toContain('aria-keyshortcuts="Meta+Shift+P"');
     expect(html).toContain('aria-label="Post type: task. Switch to work log"');
     expect(html).toContain(">Task</span>");
     expect(html).toContain('placeholder="What needs doing?"');
@@ -44,6 +44,6 @@ describe("CaptureComposer keyboard access", () => {
     expect(html).toContain("<kbd>c</kbd> focus");
     expect(html).toContain("<kbd>esc</kbd> unfocus");
     expect(html).toContain("<kbd>enter</kbd> post");
-    expect(html).toContain("<kbd>⌘⇧M</kbd> switches post type");
+    expect(html).toContain("<kbd>⌘⇧P</kbd> switches post type");
   });
 });

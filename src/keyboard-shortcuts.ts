@@ -6,6 +6,19 @@ export function dateShortcutDirection(key: string): -1 | 1 | null {
   return null;
 }
 
+/** Return whether a keyboard event requests switching the capture post type. */
+export function isPostTypeSwitchShortcut(
+  event: Pick<KeyboardEvent, "altKey" | "ctrlKey" | "key" | "metaKey" | "shiftKey">,
+): boolean {
+  return (
+    event.metaKey &&
+    event.shiftKey &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    event.key.toLowerCase() === "p"
+  );
+}
+
 /** Return whether a keyboard event targets a field where users enter text. */
 export function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;

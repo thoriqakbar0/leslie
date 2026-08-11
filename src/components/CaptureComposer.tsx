@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
-import { isTextEntryTarget } from "../keyboard-shortcuts";
+import { isPostTypeSwitchShortcut, isTextEntryTarget } from "../keyboard-shortcuts";
 import {
   completePlannedClock,
   ESTIMATE_OPTIONS,
@@ -110,13 +110,7 @@ export function CaptureComposer({
   useEffect(() => {
     function selectEntryMode(event: KeyboardEvent) {
       if (event.defaultPrevented || event.isComposing) return;
-      const togglesMode =
-        event.metaKey &&
-        event.shiftKey &&
-        !event.altKey &&
-        !event.ctrlKey &&
-        event.key.toLowerCase() === "m";
-      if (togglesMode) {
+      if (isPostTypeSwitchShortcut(event)) {
         if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
         event.preventDefault();
         switchEntryMode();
@@ -194,7 +188,7 @@ export function CaptureComposer({
         <div className="capture-actions">
           <div className="capture-options">
             <button
-              aria-keyshortcuts="Meta+Shift+M"
+              aria-keyshortcuts="Meta+Shift+P"
               aria-label={`Post type: ${postType}. Switch to ${nextPostType}`}
               className="entry-mode-switch"
               onClick={switchEntryMode}
@@ -239,7 +233,7 @@ export function CaptureComposer({
         <span aria-hidden="true"> · </span>
         <kbd>enter</kbd> post
         <span aria-hidden="true"> · </span>
-        <kbd>⌘⇧M</kbd> switches post type
+        <kbd>⌘⇧P</kbd> switches post type
         {mode === "planned" ? (
           <>
             {" "}
