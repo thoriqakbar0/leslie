@@ -38,6 +38,8 @@ stop_previous() {
 build_app() {
   cd "$ROOT_DIR"
 
+  local app_version
+
   if ! command -v nub >/dev/null 2>&1; then
     echo "Nub is not installed. Install @nubjs/nub 0.7.5 first." >&2
     exit 1
@@ -67,6 +69,8 @@ build_app() {
     exit 1
   fi
 
+  app_version="$(nub --node -p 'require("./package.json").version')"
+
   VITE_AGENTATION_ENABLED=true nub run build
 
   mkdir -p "$RUNTIME_DIR"
@@ -79,6 +83,8 @@ build_app() {
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.thoriq.leslie" "$APP_BUNDLE/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile Leslie.icns" "$APP_BUNDLE/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleName Leslie" "$APP_BUNDLE/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $app_version" "$APP_BUNDLE/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $app_version" "$APP_BUNDLE/Contents/Info.plist"
   cp "$APP_ICON" "$APP_RESOURCES/Leslie.icns"
 
   mkdir -p "$APP_RESOURCES/app"

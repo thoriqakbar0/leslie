@@ -4,17 +4,19 @@
   --paper: #f4ede1;
   --paper-deep: #e9dfcf;
   --coral: #ff5a26;
+  --coral-ink: #c43a0c;
   --coral-soft: #ff9e7d;
   --sky: #b9c9d5;
   --line: rgba(10, 23, 36, 0.18);
 }
 
-* {
+*,
+*::before,
+*::after {
+  border: 0 solid;
   box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -30,6 +32,8 @@ body {
     sans-serif;
   font-size: 16px;
   line-height: 1.5;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -45,6 +49,24 @@ img {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline-offset: 4px;
+}
+
+.skip-link {
+  background: var(--ink);
+  color: var(--paper);
+  inset-inline-start: -9999px;
+  padding: 12px 16px;
+  position: fixed;
+  top: 16px;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  inset-inline-start: 16px;
 }
 
 .site-nav {
@@ -109,7 +131,6 @@ a {
   background: var(--coral);
   border-color: var(--coral);
   color: var(--ink);
-  transform: translateY(-2px);
 }
 
 .hero {
@@ -123,25 +144,11 @@ a {
   padding: 72px 7vw 104px;
 }
 
-.eyebrow,
 .section-kicker {
   font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-}
-
-.eyebrow {
-  align-items: center;
-  display: flex;
-  gap: 11px;
-}
-
-.eyebrow > span {
-  background: var(--coral);
-  border-radius: 50%;
-  height: 8px;
-  width: 8px;
 }
 
 .hero h1,
@@ -166,6 +173,7 @@ a {
   line-height: 1.45;
   margin: 34px 0 0;
   max-width: 680px;
+  text-wrap: pretty;
 }
 
 .hero-actions {
@@ -189,7 +197,7 @@ a {
 
 .text-link span {
   color: var(--coral);
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .privacy-line {
@@ -297,7 +305,7 @@ a {
 }
 
 .section-kicker {
-  color: var(--coral);
+  color: var(--coral-ink);
   margin: 0 0 30px;
 }
 
@@ -367,6 +375,7 @@ a {
 .feature-card p {
   font-size: 15px;
   max-width: 390px;
+  text-wrap: pretty;
 }
 
 .mini-plan,
@@ -476,9 +485,10 @@ a {
 }
 
 .steps p {
-  color: #52606c;
+  color: #485866;
   margin: 0;
   max-width: 550px;
+  text-wrap: pretty;
 }
 
 .closing {
@@ -608,7 +618,7 @@ footer > a:last-child {
   }
 
   .stage-label {
-    padding-right: 20px;
+    padding-inline-end: 20px;
   }
 
   .screenshot-shell {
@@ -652,7 +662,23 @@ footer > a:last-child {
   footer p,
   footer > a:last-child {
     justify-self: start;
-    text-align: left;
+    text-align: start;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .nav-download:hover,
+  .primary-button:hover {
+    transform: translateY(-2px);
+  }
+
+  .nav-download:active,
+  .primary-button:active {
+    transform: scale(0.96);
   }
 }
 
