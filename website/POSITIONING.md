@@ -27,8 +27,8 @@ contrasts it with task systems that turn an unfinished list into backlog pressur
 
 ## What you do — your level
 
-**P2.** Because when plans change, Leslie keeps what you did visible and brings you back to
-today—not a backlog review.
+**P2.** Plans change. Leslie keeps what you did visible, so you can return to today without
+rebuilding the list.
 
 Reworked from: “Leslie keeps planned work and factual work logs side by side, so a changing day does
 not erase your progress.”

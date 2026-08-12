@@ -19,7 +19,7 @@ export function App() {
           <a href="#how">How it works</a>
           <a href="#source">Open source</a>
           <a className="nav-download" href={downloadUrl}>
-            Get the beta <Arrow />
+            Download beta <Arrow />
           </a>
         </div>
       </nav>
@@ -29,8 +29,8 @@ export function App() {
           <div className="hero-copy">
             <h1>The to-do list you’ll actually keep.</h1>
             <p className="hero-lede">
-              Because when plans change, Leslie keeps what you did visible and brings you back to
-              today—not a backlog review.
+              Plans change. Leslie keeps what you did visible, so you can return to today without
+              rebuilding the list.
             </p>
             <div className="hero-actions">
               <a className="primary-button" href={downloadUrl}>
@@ -40,7 +40,9 @@ export function App() {
                 See how it works <span aria-hidden="true">↓</span>
               </a>
             </div>
-            <p className="privacy-line">MIT licensed · No account · Your data stays local</p>
+            <p className="privacy-line">
+              MIT licensed · No account · Your data stays local · Not notarized
+            </p>
           </div>
 
           <div className="hero-orbit" aria-hidden="true">
@@ -57,8 +59,8 @@ export function App() {
 
         <section className="product-stage" aria-label="Leslie application preview">
           <div className="stage-label">
-            <span>One calm place</span>
-            <span>for the day you actually had</span>
+            <span>Plans and work logs</span>
+            <span>on one screen</span>
           </div>
           <div className="screenshot-shell">
             <img
@@ -71,17 +73,16 @@ export function App() {
         </section>
 
         <section className="manifesto" id="why">
-          <p className="section-kicker">The idea</p>
           <div className="manifesto-grid">
             <h2>Your plan is a direction. Your work log is the record.</h2>
             <div className="manifesto-copy">
               <p>
-                Most task apps only remember what you promised. Leslie remembers what happened,
-                including the useful work that arrived unplanned.
+                A task list records what you planned. Leslie keeps that plan beside a factual log,
+                including useful work that arrived unplanned.
               </p>
               <p>
-                There are no streaks, scores, or red overdue counts. Just a clear place to plan,
-                work, and look back with honest evidence.
+                Progress appears as timeline entries. Leslie leaves out streaks, scores, and red
+                overdue counts.
               </p>
             </div>
           </div>
@@ -91,7 +92,7 @@ export function App() {
           <article className="feature-card coral-card">
             <span className="feature-number">01</span>
             <div>
-              <h3>Plan without making promises.</h3>
+              <h3>Plan what comes next.</h3>
               <p>Capture the next thing, add a time estimate, and keep it visible.</p>
             </div>
             <div className="mini-plan" aria-hidden="true">
@@ -104,8 +105,8 @@ export function App() {
           <article className="feature-card cream-card">
             <span className="feature-number">02</span>
             <div>
-              <h3>Record the work that appeared.</h3>
-              <p>Log what you did directly. The timeline keeps the day factual.</p>
+              <h3>Log work as it happens.</h3>
+              <p>Record completed, partial, and unplanned work directly in the timeline.</p>
             </div>
             <div className="mini-log" aria-hidden="true">
               <span>09:12</span>
@@ -117,7 +118,7 @@ export function App() {
           <article className="feature-card navy-card">
             <span className="feature-number">03</span>
             <div>
-              <h3>Return without rebuilding context.</h3>
+              <h3>Pick up where you left off.</h3>
               <p>Folders, notes, and activity history keep the useful details close.</p>
             </div>
             <div className="folder-stack" aria-hidden="true">
@@ -129,13 +130,12 @@ export function App() {
         </section>
 
         <section className="manifesto open-source" id="source">
-          <p className="section-kicker">Open source</p>
           <div className="manifesto-grid">
-            <h2>If Leslie stops fitting, change it.</h2>
+            <h2>Open source means you can change Leslie.</h2>
             <div className="manifesto-copy">
               <p>
-                Leslie’s original application code is public under MIT. Inspect how it stores your
-                work, change the behavior, or maintain your own version.
+                Leslie’s application code is public under MIT. Inspect how it stores your work,
+                change its behavior, or maintain your own version.
               </p>
               <a className="text-link" href="https://github.com/thoriqakbar0/leslie">
                 View Leslie’s source <Arrow />
@@ -146,29 +146,28 @@ export function App() {
 
         <section className="how" id="how">
           <div className="how-heading">
-            <p className="section-kicker">A gentler loop</p>
-            <h2>Capture. Work. Remember.</h2>
+            <h2>One composer, two kinds of record.</h2>
           </div>
           <ol className="steps">
             <li>
               <span>1</span>
               <div>
-                <h3>Put it down quickly.</h3>
-                <p>Post a planned task or something you already did from one composer.</p>
+                <h3>Add a plan or a work log.</h3>
+                <p>Use the same composer for something you intend to do or something you did.</p>
               </div>
             </li>
             <li>
               <span>2</span>
               <div>
-                <h3>Let the day change.</h3>
-                <p>Move between folders, add notes, or work from the timeline.</p>
+                <h3>Work from the day in front of you.</h3>
+                <p>Move between folders, add notes, or record progress from the timeline.</p>
               </div>
             </li>
             <li>
               <span>3</span>
               <div>
-                <h3>Keep the honest record.</h3>
-                <p>Finish with evidence of progress, not a list designed to shame you.</p>
+                <h3>Come back to what happened.</h3>
+                <p>The timeline keeps completed, partial, and unplanned work visible.</p>
               </div>
             </li>
           </ol>
@@ -179,11 +178,10 @@ export function App() {
             <img src="/leslie-mark.png" alt="" width={108} height={72} />
           </div>
           <div>
-            <p className="section-kicker">Leslie for macOS</p>
             <h2>Your day was real. Keep the record.</h2>
           </div>
           <a className="primary-button light-button" href={downloadUrl}>
-            Get the beta <Arrow />
+            Download beta <Arrow />
           </a>
         </section>
       </main>
@@ -193,7 +191,7 @@ export function App() {
           <img src="/leslie-mark.png" alt="" width={42} height={28} />
           <span>Leslie</span>
         </a>
-        <p>A quiet tool for nonlinear days.</p>
+        <p>Plans and work logs, side by side.</p>
         <a href="https://github.com/thoriqakbar0/leslie">
           View the source <Arrow />
         </a>
