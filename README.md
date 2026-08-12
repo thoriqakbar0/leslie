@@ -5,8 +5,8 @@ TypeScript, Tailwind CSS, Vite+, Nub, and SQLite.
 
 The previous product prototype is preserved in `prototype/`.
 
-The public marketing site lives in `website/`. It has its own Nub lockfile, production
-build, rendered-page tests, and Sites hosting configuration.
+The public marketing site lives in `website/`. It has its own Nub lockfile, static
+production build, rendered-page tests, and Cloudflare Pages configuration.
 
 ## Commands
 

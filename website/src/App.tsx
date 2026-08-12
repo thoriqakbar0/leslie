@@ -1,15 +1,13 @@
-import Image from "next/image";
-
 const downloadUrl = "https://github.com/thoriqakbar0/leslie/releases/latest";
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 
-export default function Home() {
+export function App() {
   return (
     <main>
       <nav className="site-nav" aria-label="Main navigation">
         <a className="brand" href="#top" aria-label="Leslie home">
-          <Image src="/leslie-mark.png" alt="" width={48} height={32} />
+          <img src="/leslie-mark.png" alt="" width={48} height={32} />
           <span>Leslie</span>
         </a>
         <div className="nav-links">
@@ -60,13 +58,11 @@ export default function Home() {
           <span>for the day you actually had</span>
         </div>
         <div className="screenshot-shell">
-          <Image
+          <img
             src="/leslie-app.png"
             alt="Leslie showing two planned tasks and a factual timeline entry"
             width={2200}
             height={1520}
-            sizes="(max-width: 680px) 900px, (max-width: 1440px) 90vw, 1280px"
-            priority
           />
         </div>
       </section>
@@ -161,7 +157,7 @@ export default function Home() {
 
       <section className="closing">
         <div className="closing-mark" aria-hidden="true">
-          <Image src="/leslie-mark.png" alt="" width={108} height={72} />
+          <img src="/leslie-mark.png" alt="" width={108} height={72} />
         </div>
         <div>
           <p className="section-kicker">Leslie for macOS</p>
@@ -174,7 +170,7 @@ export default function Home() {
 
       <footer>
         <a className="brand footer-brand" href="#top">
-          <Image src="/leslie-mark.png" alt="" width={42} height={28} />
+          <img src="/leslie-mark.png" alt="" width={42} height={28} />
           <span>Leslie</span>
         </a>
         <p>A quiet tool for nonlinear days.</p>

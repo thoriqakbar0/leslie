@@ -2,12 +2,24 @@
 
 Public marketing site for Leslie, a local-first macOS work log.
 
+GitHub `main` is the deployment source. Cloudflare Pages builds from this directory and
+serves the canonical site at `https://leslie.ta-0.com`.
+
 ## Commands
 
-- `nub install --frozen-lockfile --ignore-scripts` installs dependencies from `nub.lock`.
+- `nub install --frozen-lockfile` installs dependencies from `nub.lock`.
 - `nub run dev` starts the local site.
-- `nub run build` creates the production worker bundle.
-- `nub run test` checks the rendered HTML after a production build.
+- `nub run check` checks formatting, lint rules, and types.
+- `nub run build` creates the static production site in `dist/`.
+- `nub run test` checks the built HTML and launch assets.
+
+## Cloudflare Pages
+
+- Production branch: `main`
+- Root directory: `website`
+- Build command: `npx -y @nubjs/nub@0.7.5 install --frozen-lockfile --ignore-scripts && npx -y @nubjs/nub@0.7.5 run build`
+- Build output directory: `dist`
+- Canonical domain: `leslie.ta-0.com`
 
 ## Launch assets
 
