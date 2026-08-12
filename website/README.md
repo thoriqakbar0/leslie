@@ -25,6 +25,8 @@ serves the canonical site at `https://leslie.ta-0.com`.
 
 - `public/leslie-app.png` is a real Leslie window captured from a temporary demo profile.
 - `public/leslie-app-icon.png` and `public/leslie-mark.png` come from Leslie's approved brand assets.
-- `public/og.png` is the 1200 × 630 social preview created for this launch.
+- `public/og-v2.png` is the current 1200 × 630 social preview.
+- `og-v2.html` is the editable source for the current social preview.
+- `public/og.png` preserves the earlier launch card.
 
 The demo profile used generic tasks and was removed after the screenshot was captured.

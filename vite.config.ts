@@ -1,10 +1,23 @@
 import { defineConfig, lazyPlugins } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath, URL } from "node:url";
 
 // https://vite.dev/config/
 export default defineConfig({
   base: "./",
+  resolve: {
+    alias: {
+      "#dev-agentation": fileURLToPath(
+        new URL(
+          process.env.NODE_ENV === "production"
+            ? "./src/dev-agentation-disabled.tsx"
+            : "./src/dev-agentation.tsx",
+          import.meta.url,
+        ),
+      ),
+    },
+  },
   fmt: {
     ignorePatterns: ["prototype/**"],
   },

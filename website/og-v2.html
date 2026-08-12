@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200, initial-scale=1" />
+    <title>Leslie social preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: #f6efe3;
+        color: #071827;
+      }
+
+      .card {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+
+      .brand {
+        position: absolute;
+        top: 70px;
+        left: 72px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font:
+          54px/1 Georgia,
+          "Times New Roman",
+          serif;
+      }
+
+      .brand img {
+        width: 58px;
+        height: 38px;
+        object-fit: contain;
+      }
+
+      .dot {
+        position: absolute;
+        top: 296px;
+        left: 74px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #f04d18;
+      }
+
+      h1 {
+        position: absolute;
+        top: 320px;
+        left: 72px;
+        width: 640px;
+        margin: 0;
+        font:
+          72px/1.04 Georgia,
+          "Times New Roman",
+          serif;
+        letter-spacing: -2px;
+      }
+
+      .coral {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 652px;
+        height: 86px;
+        background: #f04d18;
+        clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%);
+      }
+
+      .panel {
+        position: absolute;
+        inset: 0 0 0 738px;
+        overflow: hidden;
+        background: #071827;
+      }
+
+      .orbit,
+      .orbit::after {
+        position: absolute;
+        top: -214px;
+        left: 82px;
+        width: 600px;
+        height: 600px;
+        border: 2px solid rgb(255 255 255 / 8%);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .orbit::after {
+        top: 86px;
+        left: 86px;
+        width: 424px;
+        height: 424px;
+      }
+
+      .app-shot {
+        position: absolute;
+        top: 122px;
+        left: 32px;
+        width: 560px;
+        height: 430px;
+        overflow: hidden;
+        border: 1px solid rgb(255 255 255 / 14%);
+        border-radius: 22px;
+        background: #111d2a;
+        box-shadow: 0 14px 40px rgb(0 0 0 / 34%);
+      }
+
+      .app-shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: left center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="brand">
+        <img src="public/leslie-mark.png" alt="" />
+        <span>Leslie</span>
+      </div>
+      <span class="dot" aria-hidden="true"></span>
+      <h1>The to-do list<br />you’ll actually keep.</h1>
+      <div class="coral" aria-hidden="true"></div>
+      <section class="panel" aria-label="Leslie application preview">
+        <span class="orbit" aria-hidden="true"></span>
+        <div class="app-shot">
+          <img src="public/leslie-app.png" alt="Leslie application" />
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

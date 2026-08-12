@@ -32,9 +32,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@0.2.8(@types/node@24.13.3)(jiti@2.7.0)(typescript@6.0.3))
-      agentation:
-        specifier: file:vendor/agentation-3.0.2.tgz
-        version: file:vendor/agentation-3.0.2.tgz
       chrono-node:
         specifier: ^2.10.1
         version: 2.10.1
@@ -63,6 +60,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.5(vite@0.2.8(@types/node@24.13.3)(jiti@2.7.0)(typescript@6.0.3))
+      agentation:
+        specifier: file:vendor/agentation-3.0.2.tgz
+        version: file:vendor/agentation-3.0.2.tgz
       concurrently:
         specifier: ^10.0.4
         version: 10.0.4

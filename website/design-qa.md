@@ -37,8 +37,9 @@ The full-view comparison makes the required hero, navigation, CTA, orbit, and st
 5. Removed the eyebrow by explicit user direction, leaving the headline as the first hero message.
 6. Completed the `better-interface` review. Added a skip link, raised small-text contrast, restricted motion to motion-safe preferences, and verified 320-pixel reflow.
 
-## Follow-up polish
+## Social preview follow-up
 
-The existing Open Graph image still uses the earlier headline. Updating that social card can be a separate asset pass.
+The current `og-v2.png` social card uses the final “The to-do list you’ll actually keep.” promise. The
+earlier `og.png` card remains as a versioned artifact and is no longer referenced by page metadata.
 
 final result: passed

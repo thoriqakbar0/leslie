@@ -1,6 +1,6 @@
 {
   "name": "leslie",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "main": "electron/main.mjs",
@@ -23,7 +23,6 @@
     "@lexical/react": "0.49.0",
     "@lexical/rich-text": "0.49.0",
     "@tailwindcss/vite": "^4.3.3",
-    "agentation": "file:vendor/agentation-3.0.2.tgz",
     "chrono-node": "^2.10.1",
     "lexical": "0.49.0",
     "react": "^19.2.8",
@@ -35,6 +34,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "agentation": "file:vendor/agentation-3.0.2.tgz",
     "concurrently": "^10.0.4",
     "electron": "^43.3.0",
     "typescript": "~6.0.2",

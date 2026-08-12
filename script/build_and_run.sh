@@ -39,6 +39,7 @@ build_app() {
   cd "$ROOT_DIR"
 
   local app_version
+  local runtime_version
 
   if ! command -v nub >/dev/null 2>&1; then
     echo "Nub is not installed. Install @nubjs/nub 0.7.5 first." >&2
@@ -70,8 +71,19 @@ build_app() {
   fi
 
   app_version="$(nub --node -p 'require("./package.json").version')"
+  runtime_version="$(nub --node -p 'require("./electron/runtime-package.json").version')"
 
-  VITE_AGENTATION_ENABLED=true nub run build
+  if [[ "$app_version" != "$runtime_version" ]]; then
+    echo "App and runtime package versions do not match." >&2
+    exit 1
+  fi
+
+  nub run build
+
+  if rg -i "agentation|127\\.0\\.0\\.1:4747" "$ROOT_DIR/dist" >/dev/null; then
+    echo "Production renderer contains Agentation." >&2
+    exit 1
+  fi
 
   mkdir -p "$RUNTIME_DIR"
   rm -rf "$APP_BUNDLE"
@@ -89,7 +101,7 @@ build_app() {
 
   mkdir -p "$APP_RESOURCES/app"
   cp -R "$ROOT_DIR/assets" "$APP_RESOURCES/app/assets"
-  cp "$ROOT_DIR/package.json" "$APP_RESOURCES/app/package.json"
+  cp "$ROOT_DIR/electron/runtime-package.json" "$APP_RESOURCES/app/package.json"
   cp -R "$ROOT_DIR/electron" "$APP_RESOURCES/app/electron"
   cp -R "$ROOT_DIR/shared" "$APP_RESOURCES/app/shared"
   cp -R "$ROOT_DIR/dist" "$APP_RESOURCES/app/dist"

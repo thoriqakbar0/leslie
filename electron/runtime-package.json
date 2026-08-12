@@ -1,0 +1,7 @@
+{
+  "name": "leslie",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.mjs"
+}

@@ -9,7 +9,9 @@ void test("builds the leslie launch page for cloudflare pages", async () => {
 
   assert.match(html, /<title>Leslie — The to-do list you’ll actually keep<\/title>/i);
   assert.match(html, /name="description"/i);
-  assert.match(html, /https:\/\/leslie\.ta-0\.com\/og\.png/);
+  assert.match(html, /https:\/\/leslie\.ta-0\.com\/og-v2\.png/);
+  assert.match(html, /property="og:image:type" content="image\/png"/);
+  assert.match(html, /name="twitter:image:alt"/);
   assert.match(html, /rel="canonical" href="https:\/\/leslie\.ta-0\.com\/"/);
   assert.match(html, /<div id="root"><\/div>/);
 
@@ -17,7 +19,9 @@ void test("builds the leslie launch page for cloudflare pages", async () => {
   assert.ok(assets.some((file) => file.endsWith(".css")));
   assert.ok(assets.some((file) => file.endsWith(".js")));
   await access(new URL("dist/leslie-app.png", projectRoot));
-  await access(new URL("dist/og.png", projectRoot));
+  const socialPreview = await readFile(new URL("dist/og-v2.png", projectRoot));
+  assert.equal(socialPreview.readUInt32BE(16), 1200);
+  assert.equal(socialPreview.readUInt32BE(20), 630);
 });
 
 void test("keeps the launch source responsive and accessible", async () => {
@@ -37,7 +41,7 @@ void test("keeps the launch source responsive and accessible", async () => {
   assert.match(app, /alt="Leslie showing two planned tasks and a factual timeline entry"/);
   assert.match(
     app,
-    /https:\/\/github\.com\/thoriqakbar0\/leslie\/releases\/download\/v0\.2\.0\/Leslie-v0\.2\.0-macOS\.zip/,
+    /https:\/\/github\.com\/thoriqakbar0\/leslie\/releases\/download\/v0\.2\.1\/Leslie-v0\.2\.1-macOS\.zip/,
   );
   assert.match(app, /Download the macOS beta/);
   assert.match(app, /Get the beta/);

@@ -1,5 +1,5 @@
 const downloadUrl =
-  "https://github.com/thoriqakbar0/leslie/releases/download/v0.2.0/Leslie-v0.2.0-macOS.zip";
+  "https://github.com/thoriqakbar0/leslie/releases/download/v0.2.1/Leslie-v0.2.1-macOS.zip";
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 
