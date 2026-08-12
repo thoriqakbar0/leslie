@@ -48,6 +48,10 @@ void test("keeps the launch source responsive and accessible", async () => {
   assert.match(app, /The to-do list you’ll actually keep\./);
   assert.match(app, /Because when plans change/);
   assert.match(app, /brings you back to/);
+  assert.match(app, /MIT licensed/);
+  assert.match(app, /If Leslie stops fitting, change it\./);
+  assert.match(app, /View Leslie’s source/);
+  assert.match(app, /https:\/\/github\.com\/thoriqakbar0\/leslie/);
   assert.doesNotMatch(app, /eyebrow|A local-first work log for macOS/);
   assert.doesNotMatch(app, /releases\/latest|Explore Leslie on GitHub|View on GitHub/i);
   assert.doesNotMatch(app, /next\/image|codex-preview|SkeletonPreview/i);

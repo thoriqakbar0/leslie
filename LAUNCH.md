@@ -15,6 +15,8 @@ without rebuilding the week.
 Plan tasks and estimates. Log work that appeared. Keep notes, folders, labels, and activity history.
 Leslie stores its data on your Mac, with no account or cloud sync.
 
+The source is public under MIT, so you can inspect it, change it, or maintain your own version.
+
 Download the beta: https://leslie.ta-0.com/
 
 This build is ad-hoc signed and not notarized. Right-click Leslie and choose **Open** on the first launch

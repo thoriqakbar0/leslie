@@ -20,6 +20,7 @@ No actionable P0, P1, or P2 mismatch remains.
 - Colors and visual tokens: cream, navy, coral, muted copy, and line opacity match the selected source.
 - Image quality and asset fidelity: the supplied Leslie mark and application screenshot remain unchanged raster assets. No placeholder or code-drawn replacement was introduced.
 - Copy and content: the hero now reads “The to-do list you’ll actually keep.” The supporting sentence explains the researched return behavior. The eyebrow was intentionally removed by user direction. Download calls use the selected “Get the beta” and “Download the macOS beta” labels.
+- Open-source positioning: the new section leads with durable control—inspect, change, or maintain Leslie—then names the MIT license. At 1440 and 390 pixels, it has no horizontal overflow and keeps a clear reading order.
 - Responsive behavior: the 390- and 320-pixel checks have no horizontal overflow. A 720-pixel check approximating 200% zoom also reflows into one column without overflow.
 - Interaction and accessibility: “How it works” scrolls to `#how`; the brand returns to the hero; all three beta actions expose the same direct-release URL; the main navigation and application screenshot retain accessible labels. The first keyboard target is a visible “Skip to content” link.
 - Contrast: the darker coral kicker measures approximately APCA Lc 64.8 and WCAG 4.56:1 against paper. Supporting step copy measures approximately APCA Lc 75.2 and WCAG 6.30:1 against paper.
@@ -36,6 +37,7 @@ The full-view comparison makes the required hero, navigation, CTA, orbit, and st
 4. Replaced the hero copy after research review and user direction. The final three-line heading preserves the selected type scale and layout.
 5. Removed the eyebrow by explicit user direction, leaving the headline as the first hero message.
 6. Completed the `better-interface` review. Added a skip link, raised small-text contrast, restricted motion to motion-safe preferences, and verified 320-pixel reflow.
+7. Added the open-source positioning section. Verified its desktop and mobile layouts, source link, MIT copy, and zero-overflow behavior in the rendered browser.
 
 ## Social preview follow-up
 

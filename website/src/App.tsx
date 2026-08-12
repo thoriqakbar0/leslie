@@ -17,6 +17,7 @@ export function App() {
         <div className="nav-links">
           <a href="#why">Why Leslie</a>
           <a href="#how">How it works</a>
+          <a href="#source">Open source</a>
           <a className="nav-download" href={downloadUrl}>
             Get the beta <Arrow />
           </a>
@@ -39,7 +40,7 @@ export function App() {
                 See how it works <span aria-hidden="true">↓</span>
               </a>
             </div>
-            <p className="privacy-line">Private by default · No account · Your data stays local</p>
+            <p className="privacy-line">MIT licensed · No account · Your data stays local</p>
           </div>
 
           <div className="hero-orbit" aria-hidden="true">
@@ -127,6 +128,22 @@ export function App() {
           </article>
         </section>
 
+        <section className="manifesto open-source" id="source">
+          <p className="section-kicker">Open source</p>
+          <div className="manifesto-grid">
+            <h2>If Leslie stops fitting, change it.</h2>
+            <div className="manifesto-copy">
+              <p>
+                Leslie’s original application code is public under MIT. Inspect how it stores your
+                work, change the behavior, or maintain your own version.
+              </p>
+              <a className="text-link" href="https://github.com/thoriqakbar0/leslie">
+                View Leslie’s source <Arrow />
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section className="how" id="how">
           <div className="how-heading">
             <p className="section-kicker">A gentler loop</p>
@@ -178,7 +195,7 @@ export function App() {
         </a>
         <p>A quiet tool for nonlinear days.</p>
         <a href="https://github.com/thoriqakbar0/leslie">
-          GitHub <Arrow />
+          View the source <Arrow />
         </a>
       </footer>
     </>

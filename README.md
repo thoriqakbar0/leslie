@@ -10,6 +10,8 @@
   Because when plans change, Leslie keeps what you did visible and brings you back to today—not a backlog review.
 </p>
 
+<p align="center">Open source under MIT · No account · Your data stays local</p>
+
 <p align="center">
   <a href="https://leslie.ta-0.com/">Download the macOS beta</a>
   ·
@@ -37,6 +39,12 @@ or red overdue counts.
 - Use keyboard controls for capture, navigation, and editing.
 
 Leslie stores its data in a local SQLite database. It has no account, cloud sync, or automatic updates.
+
+## Open source, beyond the checkbox
+
+If Leslie stops fitting, you can inspect the code, change it, or maintain your own version. Leslie’s
+original application and website code is available under the [MIT license](LICENSE). Third-party
+packages retain their own licenses, as listed in [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Download the macOS beta
 
@@ -68,3 +76,10 @@ formatting, and lint engine behind the package scripts.
 - `electron/` contains the desktop shell and local SQLite storage.
 - `website/` contains the Cloudflare Pages marketing site.
 - `prototype/` preserves the earlier web prototype.
+
+## License
+
+Leslie’s original source is available under the [MIT license](LICENSE). See
+[third-party notices](THIRD_PARTY_NOTICES.md) for bundled development tools and dependencies.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a substantial change.

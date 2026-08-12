@@ -3,7 +3,9 @@
 This hero targets people whose days change under procrastination, perfectionistic avoidance,
 self-blame, variable energy, or ordinary overload. Leslie's level is a local-first plan and work
 log; one level up is returning to the current day with an accurate record instead of backlog
-pressure. Pricing remains undeclared, so the price-story gate ran on internal consistency only.
+pressure. Leslie is open source under MIT, so ownership also includes the ability to inspect, change,
+or maintain the software. Pricing remains undeclared, so the price-story gate ran on internal
+consistency only.
 
 Research reviewed:
 
@@ -34,6 +36,18 @@ not erase your progress.”
 Why it survived: every record type is already supported, the claim stays diagnosis-neutral, and the
 return behavior reflects Leslie's researched product model.
 
+## Against closed task apps
+
+**P3.** If Leslie stops fitting, you can inspect the code, change it, or maintain your own version
+under the MIT license.
+
+Reworked from: “Open source.”
+
+Why it survived: “open source” alone names a mechanism. This statement names the durable control that
+the MIT license gives the person using Leslie. Its opposite—a closed app controlled only by its
+vendor—is a common product strategy. Leslie accepts public implementation details, reuse, and forks in
+exchange for that control. Third-party dependencies retain their own licenses.
+
 ## Retired without a statement
 
 - “Make peace with what got done.” — retired from the hero because it is an aspiration without a
@@ -41,11 +55,12 @@ return behavior reflects Leslie's researched product model.
 
 ## Facts to verify
 
-None. The hero uses product behavior and research-backed design direction, not an invented outcome,
-number, testimonial, or treatment claim.
+None. The claims use implemented product behavior, the MIT license, and research-backed design
+direction—not an invented outcome, number, testimonial, or treatment claim.
 
 ## Next steps
 
 Use P1 as Leslie's homepage and social headline. Use P2 beneath it and in launch posts that need the
-product model explained. A full positioning pass can add the remaining roles after Leslie's pricing
-strategy and ideal-customer definition are declared.
+product model explained. Use P3 wherever the site or launch copy mentions open source; lead with
+control instead of the label alone. A full positioning pass can add the remaining roles after Leslie's
+pricing strategy and ideal-customer definition are declared.

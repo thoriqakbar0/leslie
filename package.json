@@ -2,6 +2,9 @@
   "name": "leslie",
   "version": "0.2.1",
   "private": true,
+  "homepage": "https://leslie.ta-0.com/",
+  "license": "MIT",
+  "repository": "github:thoriqakbar0/leslie",
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
