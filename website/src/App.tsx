@@ -1,4 +1,4 @@
-const downloadUrl = "https://github.com/thoriqakbar0/leslie/releases/latest";
+const projectUrl = "https://github.com/thoriqakbar0/leslie";
 
 const Arrow = () => <span aria-hidden="true">↗</span>;
 
@@ -13,8 +13,8 @@ export function App() {
         <div className="nav-links">
           <a href="#why">Why Leslie</a>
           <a href="#how">How it works</a>
-          <a className="nav-download" href={downloadUrl}>
-            Get the beta <Arrow />
+          <a className="nav-download" href={projectUrl}>
+            View on GitHub <Arrow />
           </a>
         </div>
       </nav>
@@ -30,8 +30,8 @@ export function App() {
             erase your progress.
           </p>
           <div className="hero-actions">
-            <a className="primary-button" href={downloadUrl}>
-              Download the macOS beta <Arrow />
+            <a className="primary-button" href={projectUrl}>
+              Explore Leslie on GitHub <Arrow />
             </a>
             <a className="text-link" href="#how">
               See how it works <span aria-hidden="true">↓</span>
@@ -163,8 +163,8 @@ export function App() {
           <p className="section-kicker">Leslie for macOS</p>
           <h2>Your day was real. Keep the record.</h2>
         </div>
-        <a className="primary-button light-button" href={downloadUrl}>
-          Get the beta <Arrow />
+        <a className="primary-button light-button" href={projectUrl}>
+          View on GitHub <Arrow />
         </a>
       </section>
 

@@ -30,5 +30,7 @@ void test("keeps the launch source responsive and accessible", async () => {
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(app, /aria-label="Main navigation"/);
   assert.match(app, /alt="Leslie showing two planned tasks and a factual timeline entry"/);
+  assert.match(app, /https:\/\/github\.com\/thoriqakbar0\/leslie/);
+  assert.doesNotMatch(app, /releases\/latest|Download the macOS beta|Get the beta/i);
   assert.doesNotMatch(app, /next\/image|codex-preview|SkeletonPreview/i);
 });
