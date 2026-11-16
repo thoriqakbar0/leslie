@@ -7,8 +7,8 @@ import storageChannels from "./storage-channels.cjs";
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const appIconPath = path.join(currentDirectory, "../assets/brand/leslie-app-icon.png");
 const preloadPath = path.join(currentDirectory, "preload.cjs");
-let localDatabase = null;
-let databaseOpenFailed = false;
+/** @type {{ kind: "unopened" | "failed" | "closed" } | { kind: "open", connection: ReturnType<typeof createLeslieDatabase> }} */
+let databaseSession = { kind: "unopened" };
 
 function parseRendererUrl(value) {
   if (!value) return null;
@@ -56,24 +56,27 @@ function storageFailure(operation) {
 
 function registerStorageHandlers() {
   try {
-    localDatabase = createLeslieDatabase(path.join(app.getPath("userData"), "leslie.sqlite3"));
+    databaseSession = {
+      kind: "open",
+      connection: createLeslieDatabase(path.join(app.getPath("userData"), "leslie.sqlite3")),
+    };
   } catch {
-    databaseOpenFailed = true;
+    databaseSession = { kind: "failed" };
   }
 
   ipcMain.handle(storageChannels.load, () => {
-    if (databaseOpenFailed || localDatabase === null) return storageFailure("open");
+    if (databaseSession.kind !== "open") return storageFailure("open");
     try {
-      return { ok: true, value: localDatabase.loadState() };
+      return { ok: true, value: databaseSession.connection.loadState() };
     } catch {
       return storageFailure("read");
     }
   });
 
   ipcMain.handle(storageChannels.save, (_event, state) => {
-    if (databaseOpenFailed || localDatabase === null) return storageFailure("open");
+    if (databaseSession.kind !== "open") return storageFailure("open");
     try {
-      localDatabase.saveState(state);
+      databaseSession.connection.saveState(state);
       return { ok: true, value: null };
     } catch {
       return storageFailure("write");
@@ -104,8 +107,10 @@ app
   .catch(failStartup);
 
 app.on("before-quit", () => {
-  localDatabase?.close();
-  localDatabase = null;
+  if (databaseSession.kind !== "open") return;
+  const { connection } = databaseSession;
+  databaseSession = { kind: "closed" };
+  connection.close();
 });
 
 app.on("window-all-closed", () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { CaptureComposer } from "./components/CaptureComposer";
 import { DatePicker } from "./components/DatePicker";
@@ -8,44 +8,18 @@ import { PlaybackBar } from "./components/PlaybackBar";
 import { Sidebar } from "./components/Sidebar";
 import { dateShortcutDirection, isTextEntryTarget } from "./keyboard-shortcuts";
 import {
-  createInitialState,
   formatScaleDate,
-  moveScaleDate,
   plannedItemsInRange,
   parseTimeScale,
-  removeWorkLogEntry,
-  restoreWorkLogEntry,
   timeScaleRange,
   timeScaleHeading,
   timestampOnDate,
 } from "./model";
-import type {
-  ActivityHistoryEntry,
-  EntryMode,
-  EstimateMinutes,
-  LeslieState,
-  PlannedItem,
-  TaskList,
-  TimeScale,
-  WorkLogEntry,
-} from "./model";
-import { loadState, saveState } from "./storage";
-
-type DateMotionDirection = "next" | "previous" | "reset";
-
-type NotesTarget =
-  | { readonly kind: "task"; readonly id: string }
-  | { readonly kind: "log"; readonly id: string };
-
-type RemovedItem =
-  | { readonly kind: "task"; readonly task: PlannedItem }
-  | { readonly kind: "log"; readonly entry: WorkLogEntry }
-  | {
-      readonly kind: "list";
-      readonly list: TaskList;
-      readonly tasks: readonly PlannedItem[];
-      readonly workLog: readonly WorkLogEntry[];
-    };
+import type { EntryMode, EstimateMinutes } from "./model";
+import { useDocumentSession } from "./use-document-session";
+import { playbackReducer, type Playback } from "./playback";
+import { dateNavigationReducer, type DateNavigation } from "./date-navigation";
+import type { NotesTarget, RemovedItem } from "./document-transitions";
 
 function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -53,46 +27,28 @@ function createId(prefix: string): string {
 
 /** Compose Leslie's persistent folder and work-log interface. */
 function App() {
-  const [document, setDocument] = useState<LeslieState | null>(null);
-  const [timeScale, setTimeScale] = useState<TimeScale>("day");
-  const [anchorTimestamp, setAnchorTimestamp] = useState(() => Date.now());
-  const [dateMotionDirection, setDateMotionDirection] = useState<DateMotionDirection>("reset");
+  const { document, sendDocument, storageFailed } = useDocumentSession();
+  const [{ timeScale, anchorTimestamp, motion: dateMotionDirection }, navigateDate] = useReducer(
+    dateNavigationReducer,
+    { timeScale: "day", anchorTimestamp: Date.now(), motion: "reset" } satisfies DateNavigation,
+  );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activeNotesTarget, setActiveNotesTarget] = useState<NotesTarget | null>(null);
   const [entryMode, setEntryMode] = useState<EntryMode>("planned");
-  const [playingTaskId, setPlayingTaskId] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [playback, dispatchPlayback] = useReducer(playbackReducer, {
+    kind: "stopped",
+  } satisfies Playback);
+  const playingTaskId = playback.kind === "stopped" ? null : playback.taskId;
+  const isPlaying = playback.kind === "running";
+  const elapsedSeconds = playback.kind === "stopped" ? 0 : playback.elapsedSeconds;
   const [removedItem, setRemovedItem] = useState<RemovedItem | null>(null);
-  const [storageFailed, setStorageFailed] = useState(false);
   const captureInputRef = useRef<HTMLInputElement>(null);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const dateNavigationRef = useRef<HTMLDivElement>(null);
-  const skipNextSave = useRef(false);
-  const saveQueue = useRef<Promise<void> | null>(null);
-
-  useEffect(() => {
-    let isCurrent = true;
-    void loadState().then((result) => {
-      if (!isCurrent) return;
-      skipNextSave.current = true;
-      if (result.ok) {
-        setDocument(result.value);
-        setStorageFailed(false);
-      } else {
-        setDocument(createInitialState());
-        setStorageFailed(true);
-      }
-    });
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
   useEffect(() => {
     if (!isPlaying) return;
     const interval = globalThis.setInterval(() => {
-      setElapsedSeconds((current) => current + 1);
+      dispatchPlayback({ kind: "tick" });
     }, 1_000);
     return () => globalThis.clearInterval(interval);
   }, [isPlaying]);
@@ -133,34 +89,12 @@ function App() {
       if (globalThis.document.querySelector(".notes-sidebar, .date-picker") !== null) return;
 
       event.preventDefault();
-      setDateMotionDirection(direction === -1 ? "previous" : "next");
-      setAnchorTimestamp((current) =>
-        moveScaleDate(new Date(current), timeScale, direction).getTime(),
-      );
+      navigateDate({ kind: "move", direction });
     }
 
     globalThis.document.addEventListener("keydown", navigateDates);
     return () => globalThis.document.removeEventListener("keydown", navigateDates);
-  }, [timeScale]);
-
-  useEffect(() => {
-    if (document === null) return;
-    if (skipNextSave.current) {
-      skipNextSave.current = false;
-      return;
-    }
-
-    let isCurrent = true;
-    const stateToSave = document;
-    const previousSave = saveQueue.current ?? Promise.resolve();
-    saveQueue.current = previousSave.then(async () => {
-      const result = await saveState(stateToSave);
-      if (isCurrent) setStorageFailed(!result.ok);
-    });
-    return () => {
-      isCurrent = false;
-    };
-  }, [document]);
+  }, []);
 
   const visibleTasks = useMemo(
     () =>
@@ -217,36 +151,17 @@ function App() {
     );
   }
 
-  function selectList(activeListId: string) {
+  function selectList(id: string) {
     setActiveNotesTarget(null);
-    setDocument((current) => (current ? { ...current, activeListId } : current));
+    sendDocument({ kind: "list-selected", id });
   }
 
   function addList(name: string) {
-    setDocument((current) => {
-      if (!current) return current;
-      const existing = current.lists.find(
-        (list) => list.name.localeCompare(name, undefined, { sensitivity: "base" }) === 0,
-      );
-      if (existing) return { ...current, activeListId: existing.id };
-      const newList = { id: createId("list"), name };
-      return { ...current, lists: [...current.lists, newList], activeListId: newList.id };
-    });
+    sendDocument({ kind: "list-added", id: createId("list"), name });
   }
 
   function renameList(id: string, name: string) {
-    setDocument((current) => {
-      if (!current) return current;
-      const duplicate = current.lists.some(
-        (list) =>
-          list.id !== id && list.name.localeCompare(name, undefined, { sensitivity: "base" }) === 0,
-      );
-      if (duplicate) return current;
-      return {
-        ...current,
-        lists: current.lists.map((list) => (list.id === id ? { ...list, name } : list)),
-      };
-    });
+    sendDocument({ kind: "list-renamed", id, name });
   }
 
   function deleteList(id: string) {
@@ -254,9 +169,6 @@ function App() {
     if (!current || current.lists.length <= 1) return;
     const list = current.lists.find((candidate) => candidate.id === id);
     if (!list) return;
-    const lists = current.lists.filter((candidate) => candidate.id !== id);
-    const nextActiveList = lists.find((candidate) => candidate.id === "inbox") ?? lists[0];
-    if (!nextActiveList) return;
     const removedTasks = current.tasks.filter((task) => task.listId === id);
     const removedWorkLog = current.workLog.filter((entry) => entry.listId === id);
     if (removedTasks.some((task) => task.id === playingTaskId)) stopPlaying();
@@ -267,111 +179,39 @@ function App() {
       setActiveNotesTarget(null);
     }
     setRemovedItem({ kind: "list", list, tasks: removedTasks, workLog: removedWorkLog });
-    setDocument({
-      ...current,
-      lists,
-      activeListId: nextActiveList.id,
-      tasks: current.tasks.filter((task) => task.listId !== id),
-      workLog: current.workLog.map((entry) =>
-        entry.listId === id ? { ...entry, listId: nextActiveList.id } : entry,
-      ),
-    });
+    sendDocument({ kind: "list-removed", id });
   }
 
   function addPlanned(title: string, estimatedMinutes: EstimateMinutes, scheduledAt: number) {
-    const taskId = createId("task");
-    const historyEntry: ActivityHistoryEntry = {
-      id: createId("history"),
-      itemId: taskId,
-      type: "planned-created",
+    sendDocument({
+      kind: "task-added",
+      id: createId("task"),
       title,
+      estimatedMinutes,
+      scheduledAt,
+      historyId: createId("history"),
       occurredAt: Date.now(),
-    };
-    setDocument((current) =>
-      current
-        ? {
-            ...current,
-            tasks: [
-              {
-                id: taskId,
-                listId: current.activeListId,
-                title,
-                notes: "",
-                estimatedMinutes,
-                scheduledAt,
-              },
-              ...current.tasks,
-            ],
-            history: [historyEntry, ...current.history],
-          }
-        : current,
-    );
+    });
   }
 
   function addWorkLog(note: string) {
-    const createdAt = timestampOnDate(new Date(anchorTimestamp));
-    const logId = createId("log");
-    const historyEntry: ActivityHistoryEntry = {
-      id: createId("history"),
-      itemId: logId,
-      type: "did-created",
-      title: note,
+    sendDocument({
+      kind: "log-added",
+      id: createId("log"),
+      note,
+      createdAt: timestampOnDate(new Date(anchorTimestamp)),
+      historyId: createId("history"),
       occurredAt: Date.now(),
-    };
-    setDocument((current) =>
-      current
-        ? {
-            ...current,
-            workLog: [
-              {
-                id: logId,
-                listId: current.activeListId,
-                note,
-                notes: "",
-                origin: "direct",
-                createdAt,
-              },
-              ...current.workLog,
-            ],
-            history: [historyEntry, ...current.history],
-          }
-        : current,
-    );
+    });
   }
 
   function completeTask(id: string) {
-    const createdAt = timestampOnDate(new Date(anchorTimestamp));
-    const historyId = createId("history");
-    const occurredAt = Date.now();
-    setDocument((current) => {
-      if (!current) return current;
-      const task = current.tasks.find((candidate) => candidate.id === id);
-      if (!task) return current;
-      return {
-        ...current,
-        tasks: current.tasks.filter((candidate) => candidate.id !== id),
-        workLog: [
-          {
-            id: task.id,
-            listId: task.listId,
-            note: `Completed ${task.title}.`,
-            notes: task.notes,
-            origin: "planned",
-            createdAt,
-          },
-          ...current.workLog,
-        ],
-        history: [
-          {
-            id: historyId,
-            itemId: task.id,
-            type: "planned-completed",
-            title: task.title,
-            occurredAt,
-          },
-          ...current.history,
-        ],
-      };
+    sendDocument({
+      kind: "task-completed",
+      id,
+      createdAt: timestampOnDate(new Date(anchorTimestamp)),
+      historyId: createId("history"),
+      occurredAt: Date.now(),
     });
     if (id === playingTaskId) stopPlaying();
     if (activeNotesTarget?.kind === "task" && id === activeNotesTarget.id) {
@@ -380,97 +220,35 @@ function App() {
   }
 
   function changeEstimate(id: string, estimatedMinutes: EstimateMinutes) {
-    setDocument((current) =>
-      current
-        ? {
-            ...current,
-            tasks: current.tasks.map((task) =>
-              task.id === id ? { ...task, estimatedMinutes } : task,
-            ),
-          }
-        : current,
-    );
+    sendDocument({ kind: "estimate-changed", id, estimatedMinutes });
   }
 
   function changeTaskTitle(id: string, title: string) {
-    const historyId = createId("history");
-    const occurredAt = Date.now();
-    setDocument((current) => {
-      if (!current) return current;
-      const task = current.tasks.find((candidate) => candidate.id === id);
-      if (!task || task.title === title) return current;
-      return {
-        ...current,
-        tasks: current.tasks.map((candidate) =>
-          candidate.id === id ? { ...candidate, title } : candidate,
-        ),
-        history: [
-          {
-            id: historyId,
-            itemId: id,
-            itemKind: "planned",
-            type: "title-changed",
-            previousTitle: task.title,
-            title,
-            occurredAt,
-          },
-          ...current.history,
-        ],
-      };
+    sendDocument({
+      kind: "title-changed",
+      target: { kind: "task", id },
+      title,
+      historyId: createId("history"),
+      occurredAt: Date.now(),
     });
   }
 
   function changeWorkLogTitle(id: string, title: string) {
-    const historyId = createId("history");
-    const occurredAt = Date.now();
-    setDocument((current) => {
-      if (!current) return current;
-      const entry = current.workLog.find((candidate) => candidate.id === id);
-      if (!entry || entry.note === title) return current;
-      return {
-        ...current,
-        workLog: current.workLog.map((candidate) =>
-          candidate.id === id ? { ...candidate, note: title } : candidate,
-        ),
-        history: [
-          {
-            id: historyId,
-            itemId: id,
-            itemKind: "did",
-            type: "title-changed",
-            previousTitle: entry.note,
-            title,
-            occurredAt,
-          },
-          ...current.history,
-        ],
-      };
+    sendDocument({
+      kind: "title-changed",
+      target: { kind: "log", id },
+      title,
+      historyId: createId("history"),
+      occurredAt: Date.now(),
     });
   }
 
   function changeWorkLogTime(id: string, createdAt: number) {
-    setDocument((current) =>
-      !current
-        ? current
-        : {
-            ...current,
-            workLog: current.workLog.map((entry) =>
-              entry.id === id && entry.createdAt !== createdAt ? { ...entry, createdAt } : entry,
-            ),
-          },
-    );
+    sendDocument({ kind: "log-time-changed", id, createdAt });
   }
 
   function moveTask(id: string, listId: string) {
-    setDocument((current) => {
-      if (!current || !current.lists.some((list) => list.id === listId)) return current;
-      return {
-        ...current,
-        tasks: current.tasks.map((task) =>
-          task.id === id && task.listId !== listId ? { ...task, listId } : task,
-        ),
-      };
-    });
+    sendDocument({ kind: "task-moved", id, listId });
   }
 
   function openNotes(target: NotesTarget) {
@@ -479,23 +257,7 @@ function App() {
   }
 
   function changeNotes(target: NotesTarget, notes: string) {
-    setDocument((current) =>
-      !current
-        ? current
-        : target.kind === "task"
-          ? {
-              ...current,
-              tasks: current.tasks.map((task) =>
-                task.id === target.id && task.notes !== notes ? { ...task, notes } : task,
-              ),
-            }
-          : {
-              ...current,
-              workLog: current.workLog.map((entry) =>
-                entry.id === target.id && entry.notes !== notes ? { ...entry, notes } : entry,
-              ),
-            },
-    );
+    sendDocument({ kind: "notes-changed", target, notes });
   }
 
   function closeNotes() {
@@ -518,10 +280,7 @@ function App() {
     const task = current.tasks.find((candidate) => candidate.id === id);
     if (!task) return;
     setRemovedItem({ kind: "task", task });
-    setDocument({
-      ...current,
-      tasks: current.tasks.filter((candidate) => candidate.id !== id),
-    });
+    sendDocument({ kind: "task-removed", id });
     if (id === playingTaskId) stopPlaying();
     if (activeNotesTarget?.kind === "task" && id === activeNotesTarget.id) {
       setActiveNotesTarget(null);
@@ -529,31 +288,20 @@ function App() {
   }
 
   function togglePlaying(id: string) {
-    if (playingTaskId === id) {
-      setIsPlaying((current) => !current);
-      return;
-    }
-    setPlayingTaskId(id);
-    setElapsedSeconds(0);
-    setIsPlaying(true);
+    dispatchPlayback({ kind: "toggle", taskId: id });
   }
 
   function stopPlaying() {
-    setPlayingTaskId(null);
-    setIsPlaying(false);
-    setElapsedSeconds(0);
+    dispatchPlayback({ kind: "stop" });
   }
 
   function removeWorkLog(id: string) {
     const current = document;
     if (!current) return;
-    const result = removeWorkLogEntry(current.workLog, id);
-    if (!result) return;
-    setRemovedItem({ kind: "log", entry: result.removed });
-    setDocument({
-      ...current,
-      workLog: result.workLog,
-    });
+    const entry = current.workLog.find((entry) => entry.id === id);
+    if (!entry) return;
+    setRemovedItem({ kind: "log", entry });
+    sendDocument({ kind: "log-removed", id });
     if (activeNotesTarget?.kind === "log" && id === activeNotesTarget.id) {
       setActiveNotesTarget(null);
     }
@@ -561,37 +309,12 @@ function App() {
 
   function undoRemove() {
     if (!removedItem) return;
-    setDocument((current) => {
-      if (!current) return current;
-      switch (removedItem.kind) {
-        case "task":
-          return { ...current, tasks: [removedItem.task, ...current.tasks] };
-        case "log":
-          return {
-            ...current,
-            workLog: restoreWorkLogEntry(current.workLog, removedItem.entry),
-          };
-        case "list":
-          return {
-            ...current,
-            lists: [...current.lists, removedItem.list],
-            activeListId: removedItem.list.id,
-            tasks: [...removedItem.tasks, ...current.tasks],
-            workLog: current.workLog.map((entry) => {
-              const restored = removedItem.workLog.find((candidate) => candidate.id === entry.id);
-              return restored ?? entry;
-            }),
-          };
-      }
-    });
+    sendDocument({ kind: "removal-undone", removed: removedItem });
     setRemovedItem(null);
   }
 
   function selectDate(date: Date) {
-    const current = new Date(anchorTimestamp);
-    const selectedTimestamp = timestampOnDate(date, current);
-    setDateMotionDirection(selectedTimestamp < current.getTime() ? "previous" : "next");
-    setAnchorTimestamp(selectedTimestamp);
+    navigateDate({ kind: "select", date });
     setIsDatePickerOpen(false);
     globalThis.requestAnimationFrame(() => dateButtonRef.current?.focus());
   }
@@ -649,8 +372,7 @@ function App() {
                   onChange={(event) => {
                     const nextScale = parseTimeScale(event.target.value);
                     if (nextScale === null) return;
-                    setDateMotionDirection("reset");
-                    setTimeScale(nextScale);
+                    navigateDate({ kind: "scale", scale: nextScale });
                   }}
                   value={timeScale}
                 >

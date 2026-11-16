@@ -25,13 +25,14 @@ import {
   PASTE_COMMAND,
   TextNode,
 } from "lexical";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   $exportNotesMarkdown,
   $importNotesMarkdown,
   NOTES_EDITOR_NODES,
   NOTES_MARKDOWN_TRANSFORMERS,
 } from "../notes-editor-config";
+import { createNotesAutosave } from "../notes-autosave";
 import { $expandNowAtSelection, $highlightClockTextNode } from "../notes-now";
 
 const SAVE_DELAY_MS = 200;
@@ -138,8 +139,6 @@ function PersistencePlugin({
   onMarkdownChange,
 }: PersistencePluginProps) {
   const [editor] = useLexicalComposerContext();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPersistedRef = useRef(initialMarkdown);
   const onEscapeRef = useRef(onEscape);
   const onMarkdownChangeRef = useRef(onMarkdownChange);
 
@@ -148,22 +147,19 @@ function PersistencePlugin({
     onMarkdownChangeRef.current = onMarkdownChange;
   }, [onEscape, onMarkdownChange]);
 
-  const flush = useCallback(() => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    const markdown = editor.getEditorState().read($exportNotesMarkdown);
-    if (markdown === lastPersistedRef.current) return;
-    lastPersistedRef.current = markdown;
-    onMarkdownChangeRef.current(markdown);
-  }, [editor]);
+  const [{ flush, schedule }] = useState(() =>
+    createNotesAutosave({
+      initialMarkdown,
+      readMarkdown: () => editor.getEditorState().read($exportNotesMarkdown),
+      onMarkdownChange: (markdown) => onMarkdownChangeRef.current(markdown),
+      delayMs: SAVE_DELAY_MS,
+    }),
+  );
 
   useEffect(() => {
     const unregisterUpdate = editor.registerUpdateListener(({ dirtyElements, dirtyLeaves }) => {
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(flush, SAVE_DELAY_MS);
+      schedule();
     });
     const unregisterBlur = editor.registerCommand(
       BLUR_COMMAND,
@@ -205,7 +201,7 @@ function PersistencePlugin({
       unregisterPaste();
       flush();
     };
-  }, [editor, flush]);
+  }, [editor, flush, schedule]);
 
   return null;
 }

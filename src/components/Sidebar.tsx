@@ -1,6 +1,6 @@
-import { useState } from "react";
 import type { FormEvent } from "react";
 import leslieMarkUrl from "../assets/leslie-mark.png";
+import { useInlineEdit } from "../inline-edit";
 import type { TaskList } from "../model";
 
 interface SidebarProps {
@@ -21,31 +21,28 @@ export function Sidebar({
   onRenameList,
   onSelectList,
 }: SidebarProps) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingListId, setEditingListId] = useState<string | null>(null);
-  const [editingListName, setEditingListName] = useState("");
-  const [newListName, setNewListName] = useState("");
+  const creation = useInlineEdit<{ readonly name: string }>();
+  const rename = useInlineEdit<{ readonly id: string; readonly name: string }>();
+  const isAdding = creation.draft !== null;
+  const editingListId = rename.draft?.id ?? null;
 
   function submitNewList(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = newListName.trim();
+    const name = creation.draft?.name.trim();
     if (!name) return;
+    if (creation.finish() === null) return;
     onAddList(name);
-    setNewListName("");
-    setIsAdding(false);
   }
 
   function startEditing(list: TaskList) {
-    setEditingListId(list.id);
-    setEditingListName(list.name);
+    rename.start({ id: list.id, name: list.name });
   }
 
   function saveEdit() {
-    if (editingListId === null) return;
-    const name = editingListName.trim();
-    if (name) onRenameList(editingListId, name);
-    setEditingListId(null);
-    setEditingListName("");
+    const draft = rename.finish();
+    if (draft === null) return;
+    const name = draft.name.trim();
+    if (name) onRenameList(draft.id, name);
   }
 
   return (
@@ -75,14 +72,13 @@ export function Sidebar({
                     autoFocus
                     id={`list-name-${list.id}`}
                     onBlur={saveEdit}
-                    onChange={(event) => setEditingListName(event.target.value)}
+                    onChange={(event) => rename.change({ id: list.id, name: event.target.value })}
                     onKeyDown={(event) => {
                       if (event.key !== "Escape") return;
                       event.preventDefault();
-                      setEditingListId(null);
-                      setEditingListName("");
+                      rename.finish();
                     }}
-                    value={editingListName}
+                    value={rename.draft?.name ?? ""}
                   />
                 </form>
               ) : (
@@ -130,9 +126,9 @@ export function Sidebar({
             <input
               autoFocus
               id="new-list-name"
-              onChange={(event) => setNewListName(event.target.value)}
+              onChange={(event) => creation.change({ name: event.target.value })}
               placeholder="Folder name"
-              value={newListName}
+              value={creation.draft?.name ?? ""}
             />
             <button aria-label="Create folder" className="new-list-submit" type="submit">
               +
@@ -142,7 +138,7 @@ export function Sidebar({
           <button
             aria-label="Add folder"
             className="add-list"
-            onClick={() => setIsAdding(true)}
+            onClick={() => creation.start({ name: "" })}
             type="button"
           >
             <span aria-hidden="true">+</span>

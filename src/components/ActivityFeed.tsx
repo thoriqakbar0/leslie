@@ -1,10 +1,4 @@
-import {
-  type KeyboardEvent as ReactKeyboardEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useState } from "react";
 import { parseEntryLabels, type LabeledEntryText } from "../entry-labels";
 import { folderTone } from "../folder-identity";
 import { isTextEntryTarget } from "../keyboard-shortcuts";
@@ -16,6 +10,7 @@ import {
   timestampAtClockTime,
 } from "../model";
 import type { EstimateMinutes, PlannedItem, TaskList, TimeScale, WorkLogEntry } from "../model";
+import { useInlineEdit } from "../inline-edit";
 import { taskNavigationIndex } from "../task-navigation";
 
 interface ActivityFeedProps {
@@ -148,11 +143,11 @@ export function ActivityFeed({
   onWorkLogTitleChange,
 }: ActivityFeedProps) {
   const [workLogSort, setWorkLogSort] = useState<WorkLogSort>("newest");
-  const [editableEntry, setEditableEntry] = useState<EditableEntry | null>(null);
-  const [editableTime, setEditableTime] = useState<EditableTime | null>(null);
+  const titleEdit = useInlineEdit<EditableEntry>();
+  const timeEdit = useInlineEdit<EditableTime>();
+  const editableEntry = titleEdit.draft;
+  const editableTime = timeEdit.draft;
   const [movingTaskId, setMovingTaskId] = useState<string | null>(null);
-  const isFinishingEdit = useRef(false);
-  const isFinishingTimeEdit = useRef(false);
   const sortedWorkLog = useMemo(
     () =>
       [...workLog].sort((left, right) =>
@@ -165,20 +160,18 @@ export function ActivityFeed({
   const listsById = useMemo(() => new Map(lists.map((list) => [list.id, list])), [lists]);
 
   function startEditing(kind: EditableEntry["kind"], id: string, title: string) {
-    isFinishingEdit.current = false;
-    setEditableEntry({ id, key: `${kind}:${id}`, kind, originalTitle: title, title });
+    titleEdit.start({ id, key: `${kind}:${id}`, kind, originalTitle: title, title });
   }
 
   function finishEditing(save: boolean, restoreFocus: boolean) {
-    if (editableEntry === null || isFinishingEdit.current) return;
-    isFinishingEdit.current = true;
+    const editableEntry = titleEdit.finish();
+    if (editableEntry === null) return;
     const targetKey = editableEntry.key;
     const title = editableEntry.title.trim();
     if (save && title.length > 0 && title !== editableEntry.originalTitle) {
       if (editableEntry.kind === "task") onTaskTitleChange(editableEntry.id, title);
       else onWorkLogTitleChange(editableEntry.id, title);
     }
-    setEditableEntry(null);
     if (!restoreFocus) return;
     globalThis.requestAnimationFrame(() => {
       const triggers = globalThis.document.querySelectorAll<HTMLElement>("[data-notes-trigger]");
@@ -226,19 +219,17 @@ export function ActivityFeed({
 
   function startTimeEditing(entry: WorkLogEntry) {
     const value = formatCompactTime(entry.createdAt);
-    isFinishingTimeEdit.current = false;
-    setEditableTime({ id: entry.id, originalValue: value, timestamp: entry.createdAt, value });
+    timeEdit.start({ id: entry.id, originalValue: value, timestamp: entry.createdAt, value });
   }
 
   function finishTimeEditing(save: boolean, restoreFocus: boolean) {
-    if (editableTime === null || isFinishingTimeEdit.current) return;
-    isFinishingTimeEdit.current = true;
+    const editableTime = timeEdit.finish();
+    if (editableTime === null) return;
     const { id, originalValue, timestamp, value } = editableTime;
     const nextTimestamp = timestampAtClockTime(timestamp, value);
     if (save && value !== originalValue && nextTimestamp !== null) {
       onWorkLogTimeChange(id, nextTimestamp);
     }
-    setEditableTime(null);
     if (!restoreFocus) return;
     globalThis.requestAnimationFrame(() => {
       const trigger = globalThis.document.querySelector<HTMLElement>(
@@ -374,7 +365,7 @@ export function ActivityFeed({
                         data-activity-editing-target=""
                         onBlur={() => finishEditing(true, false)}
                         onChange={(event) =>
-                          setEditableEntry({ ...editableEntry, title: event.target.value })
+                          titleEdit.change({ ...editableEntry, title: event.target.value })
                         }
                         onKeyDown={(event) => {
                           if (event.key === "Enter") finishEditing(true, true);
@@ -531,7 +522,7 @@ export function ActivityFeed({
                     className="log-time-editor"
                     onBlur={() => finishTimeEditing(true, false)}
                     onChange={(event) =>
-                      setEditableTime({ ...editableTime, value: event.target.value })
+                      timeEdit.change({ ...editableTime, value: event.target.value })
                     }
                     onKeyDown={(event) => {
                       if (event.key === "Enter") finishTimeEditing(true, true);
@@ -571,7 +562,7 @@ export function ActivityFeed({
                       id={titleId}
                       onBlur={() => finishEditing(true, false)}
                       onChange={(event) =>
-                        setEditableEntry({ ...editableEntry, title: event.target.value })
+                        titleEdit.change({ ...editableEntry, title: event.target.value })
                       }
                       onKeyDown={(event) => {
                         if (event.key === "Enter") finishEditing(true, true);

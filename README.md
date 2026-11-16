@@ -83,3 +83,4 @@ Leslie’s original source is available under the [MIT license](LICENSE). See
 [third-party notices](THIRD_PARTY_NOTICES.md) for bundled development tools and dependencies.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a substantial change.
+See [state machine ownership](docs/state-machines.md) for application states, events, and verification.
