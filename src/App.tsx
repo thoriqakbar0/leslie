@@ -27,7 +27,8 @@ function createId(prefix: string): string {
 
 /** Compose Leslie's persistent folder and work-log interface. */
 function App() {
-  const { document, sendDocument, storageFailed } = useDocumentSession();
+  const { document, sendDocument, retryLoad, loadFailed, storageFailed } = useDocumentSession();
+
   const [{ timeScale, anchorTimestamp, motion: dateMotionDirection }, navigateDate] = useReducer(
     dateNavigationReducer,
     { timeScale: "day", anchorTimestamp: Date.now(), motion: "reset" } satisfies DateNavigation,
@@ -38,13 +39,17 @@ function App() {
   const [playback, dispatchPlayback] = useReducer(playbackReducer, {
     kind: "stopped",
   } satisfies Playback);
+
   const playingTaskId = playback.kind === "stopped" ? null : playback.taskId;
   const isPlaying = playback.kind === "running";
   const elapsedSeconds = playback.kind === "stopped" ? 0 : playback.elapsedSeconds;
+
   const [removedItem, setRemovedItem] = useState<RemovedItem | null>(null);
+
   const captureInputRef = useRef<HTMLInputElement>(null);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const dateNavigationRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!isPlaying) return;
     const interval = globalThis.setInterval(() => {
@@ -142,6 +147,20 @@ function App() {
     const [start, end] = timeScaleRange(timeScale, new Date(anchorTimestamp));
     return document.workLog.filter((entry) => entry.createdAt >= start && entry.createdAt < end);
   }, [anchorTimestamp, document, timeScale]);
+
+  if (loadFailed) {
+    return (
+      <main className="leslie-loading" aria-labelledby="load-failure-title">
+        <div className="load-failure" role="alert">
+          <h1 id="load-failure-title">Your data could not be loaded.</h1>
+          <p>Leslie has not replaced your saved data. Try loading it again.</p>
+          <button onClick={retryLoad} type="button">
+            Retry loading
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (document === null) {
     return (

@@ -104,6 +104,33 @@ button {
   letter-spacing: -0.025em;
 }
 
+.load-failure {
+  max-width: 30rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.load-failure h1 {
+  margin: 0 0 1rem;
+  font: 500 var(--text-title) / 1.1 var(--serif);
+  letter-spacing: -0.025em;
+}
+
+.load-failure p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.load-failure button {
+  margin-top: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.4rem;
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+}
+
 .leslie-app {
   position: relative;
   min-height: 100vh;

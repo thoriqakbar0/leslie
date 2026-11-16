@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { createInitialState } from "./model";
 import { documentSessionReducer, type DocumentSession } from "./document-session";
 import { createDocumentWriter } from "./document-writer";
 import type { DocumentEvent } from "./document-transitions";
@@ -12,21 +11,19 @@ export function useDocumentSession() {
   const [saveDocument] = useState(() => createDocumentWriter(saveState));
   const document = session.kind === "ready" ? session.document : null;
   const revision = session.kind === "ready" ? session.revision : 0;
+  const isLoading = session.kind === "loading";
 
   useEffect(() => {
+    if (!isLoading) return;
     let current = true;
     void loadState().then((result) => {
       if (!current) return;
-      dispatch({
-        kind: "loaded",
-        document: result.ok ? result.value : createInitialState(),
-        failed: !result.ok,
-      });
+      dispatch(result.ok ? { kind: "loaded", document: result.value } : { kind: "load-failed" });
     });
     return () => {
       current = false;
     };
-  }, []);
+  }, [isLoading]);
 
   useEffect(() => {
     if (document === null || revision === 0) return;
@@ -44,5 +41,15 @@ export function useDocumentSession() {
     dispatch({ kind: "edited", event });
   }, []);
 
-  return { document, sendDocument, storageFailed: session.kind === "ready" && session.warning };
+  const retryLoad = useCallback(() => {
+    dispatch({ kind: "retry-load" });
+  }, []);
+
+  return {
+    document,
+    sendDocument,
+    retryLoad,
+    loadFailed: session.kind === "load-failed",
+    storageFailed: session.kind === "ready" && session.warning,
+  };
 }

@@ -7,7 +7,10 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const appRoot = path.resolve(process.argv[2] ?? root);
+const failedLoadCheck = process.argv.includes("--failed-load");
+const appRoot = path.resolve(
+  process.argv.slice(2).find((argument) => !argument.startsWith("--")) ?? root,
+);
 const profile = await mkdtemp(path.join(tmpdir(), "leslie-state-check-"));
 const display = spawn("Xvfb", ["-displayfd", "1", "-screen", "0", "1100x760x24"], {
   stdio: ["ignore", "pipe", "pipe"],
@@ -84,7 +87,13 @@ async function click(selector) {
 async function input(selector, value) {
   await waitFor(selector);
   await evaluate(
-    `(() => { const input = ${query(selector)}; input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
+    `(() => {
+      const input = ${query(selector)};
+      input.focus();
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      descriptor.set.call(input, ${JSON.stringify(value)});
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    })()`,
   );
   await delay(50);
 }
@@ -103,6 +112,61 @@ async function waitStored(probe, label) {
   }, label);
 }
 
+async function verifyFailedLoad(receipts) {
+  await until(
+    () => evaluate("!!document.querySelector('.leslie-app, .load-failure')"),
+    "load outcome",
+  );
+  if (await evaluate("!!document.querySelector('.leslie-app')")) {
+    await input("#capture-input", "Unsafe fallback edit");
+    await click(".capture-submit");
+    const overwritten = await waitStored(
+      (state) => state.tasks.some((task) => task.title === "Unsafe fallback edit"),
+      "fallback write",
+    );
+    assert.ok(
+      overwritten.tasks.some((task) => task.id === "protected"),
+      "Failed load overwrote the protected original document",
+    );
+  }
+
+  assert.equal(await evaluate("!!document.querySelector('#capture-input')"), false);
+  const screenshot = await command("Page.captureScreenshot");
+  await writeFile("/tmp/leslie-load-failure.png", Buffer.from(screenshot.data, "base64"));
+
+  await click(".load-failure button");
+  await waitFor(".load-failure");
+  assert.deepEqual(await receipts(), []);
+
+  const original = await stored();
+  assert.equal(original.ok, true);
+  assert.equal(original.value.tasks[0].id, "protected");
+  assert.equal(original.value.tasks[0].notes, "Keep these notes");
+
+  await click(".load-failure button");
+  await waitFor(".leslie-app");
+  assert.equal(
+    await evaluate("document.querySelector('[data-notes-trigger=\"task:protected\"]').textContent"),
+    "Protected original task",
+  );
+  assert.deepEqual(await receipts(), []);
+
+  await input("#capture-input", "Safe new task");
+  await click(".capture-submit");
+  await waitStored(
+    (state) =>
+      state.tasks.some((task) => task.title === "Safe new task") &&
+      state.tasks.some((task) => task.id === "protected" && task.notes === "Keep these notes"),
+    "safe write after recovery",
+  );
+  assert.deepEqual(await receipts(), ["save"]);
+  assert.deepEqual(failures, []);
+  console.log(
+    `PASS failed-load recovery (${appRoot}): blocked editing and writes, ` +
+      "repeated retry, original task and notes retained, edits saved after successful load",
+  );
+}
+
 try {
   const displayNumber = await new Promise((resolve, reject) => {
     display.stdout.once("data", (data) => resolve(data.toString().trim()));
@@ -118,14 +182,21 @@ import { ipcMain } from "electron";
 import { writeFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 const receipts = [];
-const record = (value) => { receipts.push(value); writeFileSync(${JSON.stringify(receiptsPath)}, JSON.stringify(receipts)); };
+const record = (value) => {
+  receipts.push(value);
+  writeFileSync(${JSON.stringify(receiptsPath)}, JSON.stringify(receipts));
+};
 const handle = ipcMain.handle.bind(ipcMain);
 ipcMain.handle = (channel, listener) => handle(channel, async (...args) => {
   if (channel !== "leslie:storage:save") return listener(...args);
   const label = args[1].tasks.find(task => task.title.startsWith("Queue "))?.title ?? "ordinary";
   record("start:" + label);
   if (label === "Queue failed write" || label === "Queue slow write") await delay(500);
-  const result = label === "Queue failed write" ? { ok: false, error: { operation: "write" } } : await listener(...args);
+  const result = label === "Queue failed write"
+    ? { ok: false, error: { operation: "write" } }
+    : await listener(...args);
+
+
   record("end:" + label);
   return result;
 });
@@ -135,12 +206,18 @@ await import(${JSON.stringify(pathToFileURL(path.join(appRoot, "electron/main.mj
   const receipts = async () => JSON.parse(await readFile(receiptsPath, "utf8"));
   electron = spawn(
     path.join(root, "node_modules/electron/dist/electron"),
-    ["--no-sandbox", "--remote-debugging-port=0", fixturePath],
+    [
+      "--no-sandbox",
+      "--remote-debugging-port=0",
+      failedLoadCheck ? path.join(root, "script/fixtures/failed-load.mjs") : fixturePath,
+    ],
     {
       env: {
         ...process.env,
         DISPLAY: `:${displayNumber}`,
         XDG_CONFIG_HOME: profile,
+        LESLIE_VERIFY_APP_ROOT: appRoot,
+        LESLIE_VERIFY_PROFILE: profile,
         NODE_OPTIONS: "",
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -151,177 +228,201 @@ await import(${JSON.stringify(pathToFileURL(path.join(appRoot, "electron/main.mj
     stderr += data;
   });
   electron.once("error", (error) => failures.push(String(error)));
+
   const port = await until(() => {
     const match = stderr.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)/);
     if (electron.exitCode !== null)
       throw new Error(`Electron exited ${electron.exitCode}: ${stderr}`);
     return match?.[1];
   }, "Electron debugger");
+
   const page = await until(async () => {
     const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     return pages.find((page) => page.type === "page" && page.url.startsWith("file:"));
   }, "production renderer");
+
   socket = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
     socket.onopen = resolve;
     socket.onerror = reject;
   });
+
   socket.onmessage = ({ data }) => {
     const response = JSON.parse(data);
     events.get(response.method)?.();
     if (response.method === "Runtime.exceptionThrown")
       failures.push(JSON.stringify(response.params));
+
     const request = pending.get(response.id);
     if (!request) return;
     pending.delete(response.id);
     if (response.error) request.reject(new Error(response.error.message));
     else request.resolve(response.result);
   };
+
   socket.onclose = () => {
     for (const request of pending.values())
       request.reject(new Error("Electron debugger disconnected"));
     pending.clear();
   };
+
   await command("Runtime.enable");
   await command("Page.enable");
-  await waitFor(".leslie-app");
-  assert.deepEqual(await receipts(), ["start:ordinary", "end:ordinary"]);
-  const before = await stored();
-  assert.equal(before.ok, true);
-  const task = before.value.tasks.find((task) => task.listId === "inbox");
-  assert.ok(task);
-  const play = `[aria-label="Playback for ${task.title}"]`;
-  await click(play);
-  await waitFor(".is-playing");
-  await delay(1100);
-  await click(play);
-  await waitFor(".is-paused");
-  assert.match(await evaluate("document.querySelector('.playback-bar').textContent"), /0:01/);
-  await click(play);
-  await waitFor(".is-playing");
-  await click(".playback-stop");
-  assert.equal(await evaluate("!!document.querySelector('.is-current')"), false);
 
-  const trigger = `[data-notes-trigger="task:${task.id}"]`;
-  await evaluate(`${query(trigger)}.focus()`);
-  await key("e", "KeyE");
-  await input(".activity-title-editor", "A cancelled title");
-  await key("Escape");
-  assert.equal(await evaluate(`${query(trigger)}.textContent`), task.title);
-  await key("e", "KeyE");
-  await input(".activity-title-editor", "State machine smoke task");
-  await key("Enter");
-  const renamed = await waitStored(
-    (state) =>
-      state.tasks.some((item) => item.id === task.id && item.title === "State machine smoke task"),
-    "title persistence",
-  );
-  assert.equal(
-    renamed.history.filter((entry) => entry.type === "title-changed" && entry.itemId === task.id)
-      .length,
-    1,
-  );
+  if (failedLoadCheck) await verifyFailedLoad(receipts);
+  if (!failedLoadCheck) {
+    await waitFor(".leslie-app");
+    assert.deepEqual(await receipts(), ["start:ordinary", "end:ordinary"]);
+    const before = await stored();
+    assert.equal(before.ok, true);
+    const task = before.value.tasks.find((task) => task.listId === "inbox");
+    assert.ok(task);
 
-  await click(trigger);
-  await waitFor(".rich-notes-editor");
-  await command("Input.insertText", { text: "Notes flushed on close" });
-  await key("Escape");
-  await waitStored(
-    (state) =>
-      state.tasks.some(
-        (item) => item.id === task.id && item.notes.includes("Notes flushed on close"),
-      ),
-    "notes flush",
-  );
+    const play = `[aria-label="Playback for ${task.title}"]`;
+    await click(play);
+    await waitFor(".is-playing");
+    await delay(1100);
+    await click(play);
+    await waitFor(".is-paused");
+    assert.match(await evaluate("document.querySelector('.playback-bar').textContent"), /0:01/);
+    await click(play);
+    await waitFor(".is-playing");
+    await click(".playback-stop");
+    assert.equal(await evaluate("!!document.querySelector('.is-current')"), false);
 
-  await click('[aria-label="Add folder"]');
-  await input("#new-list-name", "Draft preserved");
-  await evaluate(
-    "document.querySelector('.list-select').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))",
-  );
-  await waitFor(".list-edit input");
-  assert.equal(await evaluate("document.querySelector('#new-list-name').value"), "Draft preserved");
-  await input(".list-edit input", "Cancelled folder");
-  await key("Escape");
-  assert.equal((await stored()).value.lists[0].name, "Inbox");
-  await click(".new-list-submit");
-  await waitStored(
-    (state) => state.lists.some((list) => list.name === "Draft preserved"),
-    "folder creation",
-  );
-  await evaluate(
-    "Array.from(document.querySelectorAll('.list-select')).find(button => button.textContent.includes('Inbox')).click()",
-  );
-
-  await click('[aria-label="Playback for State machine smoke task"]');
-  await click('[aria-label="Complete State machine smoke task"]');
-  await waitStored(
-    (state) =>
-      !state.tasks.some((item) => item.id === task.id) &&
-      state.workLog.some((item) => item.id === task.id && item.origin === "planned"),
-    "completion",
-  );
-  assert.equal(await evaluate("!!document.querySelector('.is-current')"), false);
-  await click('[aria-label="Delete work log: Completed State machine smoke task."]');
-  await click(".toast button");
-  await waitStored((state) => state.workLog.some((item) => item.id === task.id), "undo");
-
-  await click(".current-date");
-  await waitFor(".date-picker");
-  await key("Escape");
-  assert.equal(await evaluate("document.activeElement.className"), "current-date");
-  const queueTask = before.value.tasks.find(
-    (item) => item.id !== task.id && item.listId === "inbox",
-  );
-  assert.ok(queueTask);
-  const queueTrigger = `[data-notes-trigger="task:${queueTask.id}"]`;
-  async function renameQueueTask(title) {
-    await evaluate(`${query(queueTrigger)}.focus()`);
+    const trigger = `[data-notes-trigger="task:${task.id}"]`;
+    await evaluate(`${query(trigger)}.focus()`);
     await key("e", "KeyE");
-    await input(".activity-title-editor", title);
+    await input(".activity-title-editor", "A cancelled title");
+    await key("Escape");
+    assert.equal(await evaluate(`${query(trigger)}.textContent`), task.title);
+    await key("e", "KeyE");
+    await input(".activity-title-editor", "State machine smoke task");
     await key("Enter");
+    const renamed = await waitStored(
+      (state) =>
+        state.tasks.some(
+          (item) => item.id === task.id && item.title === "State machine smoke task",
+        ),
+      "title persistence",
+    );
+    assert.equal(
+      renamed.history.filter((entry) => entry.type === "title-changed" && entry.itemId === task.id)
+        .length,
+      1,
+    );
+
+    await click(trigger);
+    await waitFor(".rich-notes-editor");
+    await command("Input.insertText", { text: "Notes flushed on close" });
+    await key("Escape");
+    await waitStored(
+      (state) =>
+        state.tasks.some(
+          (item) => item.id === task.id && item.notes.includes("Notes flushed on close"),
+        ),
+      "notes flush",
+    );
+
+    await click('[aria-label="Add folder"]');
+    await input("#new-list-name", "Draft preserved");
+    await evaluate(
+      "document.querySelector('.list-select').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))",
+    );
+    await waitFor(".list-edit input");
+    assert.equal(
+      await evaluate("document.querySelector('#new-list-name').value"),
+      "Draft preserved",
+    );
+    await input(".list-edit input", "Cancelled folder");
+    await key("Escape");
+    assert.equal((await stored()).value.lists[0].name, "Inbox");
+    await click(".new-list-submit");
+    await waitStored(
+      (state) => state.lists.some((list) => list.name === "Draft preserved"),
+      "folder creation",
+    );
+    await evaluate(
+      `(() => {
+        const buttons = Array.from(document.querySelectorAll('.list-select'));
+        buttons.find(button => button.textContent.includes('Inbox')).click();
+      })()`,
+    );
+
+    await click('[aria-label="Playback for State machine smoke task"]');
+    await click('[aria-label="Complete State machine smoke task"]');
+    await waitStored(
+      (state) =>
+        !state.tasks.some((item) => item.id === task.id) &&
+        state.workLog.some((item) => item.id === task.id && item.origin === "planned"),
+      "completion",
+    );
+    assert.equal(await evaluate("!!document.querySelector('.is-current')"), false);
+    await click('[aria-label="Delete work log: Completed State machine smoke task."]');
+    await click(".toast button");
+    await waitStored((state) => state.workLog.some((item) => item.id === task.id), "undo");
+
+    await click(".current-date");
+    await waitFor(".date-picker");
+    await key("Escape");
+    assert.equal(await evaluate("document.activeElement.className"), "current-date");
+    const queueTask = before.value.tasks.find(
+      (item) => item.id !== task.id && item.listId === "inbox",
+    );
+    assert.ok(queueTask);
+    const queueTrigger = `[data-notes-trigger="task:${queueTask.id}"]`;
+
+    async function renameQueueTask(title) {
+      await evaluate(`${query(queueTrigger)}.focus()`);
+      await key("e", "KeyE");
+      await input(".activity-title-editor", title);
+      await key("Enter");
+    }
+
+    await renameQueueTask("Queue failed write");
+    await waitFor(".storage-warning");
+    await renameQueueTask("Queue slow write");
+    await renameQueueTask("Queue latest write");
+    assert.equal(await evaluate("!!document.querySelector('.storage-warning')"), true);
+    await waitStored(
+      (state) =>
+        state.tasks.some((item) => item.id === queueTask.id && item.title === "Queue latest write"),
+      "latest queued write",
+    );
+    await until(
+      async () => !(await evaluate("!!document.querySelector('.storage-warning')")),
+      "warning recovery",
+    );
+    assert.deepEqual(
+      (await receipts()).filter((value) => value.includes("Queue ")),
+      [
+        "start:Queue failed write",
+        "end:Queue failed write",
+        "start:Queue slow write",
+        "end:Queue slow write",
+        "start:Queue latest write",
+        "end:Queue latest write",
+      ],
+    );
+    const writesBeforeReload = await receipts();
+    const reload = onceEvent("Page.loadEventFired");
+    await command("Page.reload");
+    await reload;
+    await waitFor(".leslie-app");
+    await waitStored(
+      (state) => state.workLog.some((item) => item.id === task.id),
+      "reload persistence",
+    );
+    assert.equal(await evaluate(`${query(queueTrigger)}.textContent`), "Queue latest write");
+    await delay(250);
+    assert.deepEqual(await receipts(), writesBeforeReload);
+    assert.deepEqual(failures, []);
+    console.log(
+      `PASS production Electron smoke (${appRoot}): playback, title commit/cancel, ` +
+        "notes flush, independent folder drafts, completion, undo, date-picker focus, " +
+        "ordered writes, warning recovery, hydration without duplicate writes, SQLite reload",
+    );
   }
-  await renameQueueTask("Queue failed write");
-  await waitFor(".storage-warning");
-  await renameQueueTask("Queue slow write");
-  await renameQueueTask("Queue latest write");
-  assert.equal(await evaluate("!!document.querySelector('.storage-warning')"), true);
-  await waitStored(
-    (state) =>
-      state.tasks.some((item) => item.id === queueTask.id && item.title === "Queue latest write"),
-    "latest queued write",
-  );
-  await until(
-    async () => !(await evaluate("!!document.querySelector('.storage-warning')")),
-    "warning recovery",
-  );
-  assert.deepEqual(
-    (await receipts()).filter((value) => value.includes("Queue ")),
-    [
-      "start:Queue failed write",
-      "end:Queue failed write",
-      "start:Queue slow write",
-      "end:Queue slow write",
-      "start:Queue latest write",
-      "end:Queue latest write",
-    ],
-  );
-  const writesBeforeReload = await receipts();
-  const reload = onceEvent("Page.loadEventFired");
-  await command("Page.reload");
-  await reload;
-  await waitFor(".leslie-app");
-  await waitStored(
-    (state) => state.workLog.some((item) => item.id === task.id),
-    "reload persistence",
-  );
-  assert.equal(await evaluate(`${query(queueTrigger)}.textContent`), "Queue latest write");
-  await delay(250);
-  assert.deepEqual(await receipts(), writesBeforeReload);
-  assert.deepEqual(failures, []);
-  console.log(
-    `PASS production Electron smoke (${appRoot}): playback, title commit/cancel, notes flush, independent folder drafts, completion, undo, date-picker focus, ordered writes, warning recovery, hydration without duplicate writes, SQLite reload`,
-  );
 } finally {
   socket?.close();
   electron?.kill();
