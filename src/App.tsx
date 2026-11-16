@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { CaptureComposer } from "./components/CaptureComposer";
 import { DatePicker } from "./components/DatePicker";
@@ -332,6 +332,12 @@ function App() {
     setRemovedItem(null);
   }
 
+  function changeTimeScale(event: ChangeEvent<HTMLSelectElement>) {
+    const nextScale = parseTimeScale(event.currentTarget.value);
+    if (nextScale === null) return;
+    navigateDate({ kind: "scale", scale: nextScale });
+  }
+
   function selectDate(date: Date) {
     navigateDate({ kind: "select", date });
     setIsDatePickerOpen(false);
@@ -388,11 +394,7 @@ function App() {
                 <select
                   className="time-scale"
                   id="time-scale"
-                  onChange={(event) => {
-                    const nextScale = parseTimeScale(event.target.value);
-                    if (nextScale === null) return;
-                    navigateDate({ kind: "scale", scale: nextScale });
-                  }}
+                  onChange={changeTimeScale}
                   value={timeScale}
                 >
                   <option value="day">{timeScaleHeading("day", new Date(anchorTimestamp))}</option>
