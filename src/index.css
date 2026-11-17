@@ -17,19 +17,19 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --paper: oklch(0.982 0.007 88.642);
-  --ink: oklch(0.202 0.051 258.426);
-  --muted: oklch(0.504 0.035 260.619);
-  --faint: oklch(0.545 0.014 75.273);
-  --line: oklch(0.881 0.019 83.063);
-  --accent: oklch(0.54 0.162 37.967);
+  --paper: oklch(0.93 0.012 88.642);
+  --ink: oklch(0.28 0.035 258.426);
+  --muted: oklch(0.46 0.025 260.619);
+  --faint: oklch(0.47 0.014 75.273);
+  --line: oklch(0.815 0.016 83.063);
+  --accent: oklch(0.48 0.13 37.967);
   --folder-color-1: oklch(0.54 0.105 229);
   --folder-color-2: oklch(0.53 0.105 153);
   --folder-color-3: oklch(0.56 0.105 306);
-  --selected: oklch(0.936 0.015 80.706);
+  --selected: oklch(0.875 0.017 80.706);
   --on-accent: oklch(0.987 0.008 67.727);
   --control-border: oklch(0.579 0.017 76.987);
-  --capture-surface: color-mix(in srgb, oklch(1 0 0) 22%, transparent);
+  --capture-surface: color-mix(in srgb, var(--paper) 97%, var(--ink) 3%);
   --notice-surface: oklch(0.202 0.051 258.426);
   --notice-text: oklch(0.987 0.008 67.727);
   --notice-action: oklch(0.738 0.137 40.6);
@@ -43,19 +43,19 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --paper: oklch(0.206 0.022 251.814);
-    --ink: oklch(0.954 0.015 80.707);
-    --muted: oklch(0.861 0.016 257.203);
-    --faint: oklch(0.778 0.022 252.537);
+    --paper: oklch(0.245 0.018 251.814);
+    --ink: oklch(0.9 0.012 80.707);
+    --muted: oklch(0.79 0.016 257.203);
+    --faint: oklch(0.73 0.018 252.537);
     --line: oklch(0.37 0.029 252.51);
-    --accent: oklch(0.805 0.117 43.262);
+    --accent: oklch(0.77 0.105 43.262);
     --folder-color-1: oklch(0.76 0.095 229);
     --folder-color-2: oklch(0.75 0.095 153);
     --folder-color-3: oklch(0.77 0.095 306);
-    --selected: oklch(0.281 0.018 59.814);
+    --selected: oklch(0.32 0.018 59.814);
     --on-accent: oklch(0.206 0.032 39.172);
     --control-border: oklch(0.663 0.026 256.142);
-    --capture-surface: oklch(0.231 0.023 251.483);
+    --capture-surface: oklch(0.27 0.018 251.483);
     --notice-surface: oklch(0.281 0.026 253.282);
     --notice-text: oklch(0.954 0.015 80.707);
     --notice-action: oklch(0.805 0.117 43.262);
@@ -169,12 +169,12 @@ button {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 38px 32px;
+  padding: 38px 24px;
   border-right: 1px solid var(--line);
 }
 
 .wordmark {
-  margin-bottom: 52px;
+  margin: 0 8px 40px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -190,6 +190,13 @@ button {
 
 .sidebar nav {
   display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 4px;
+  min-height: 0;
+  margin: -4px;
+  padding: 4px;
+  overflow-y: auto;
 }
 
 .sidebar-section-label {
@@ -197,16 +204,20 @@ button {
   color: var(--faint);
   font-size: var(--text-caption);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .list-row {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  height: 72px;
-  border-bottom: 1px solid var(--line);
+  min-height: 48px;
+  border-radius: 7px;
+}
+
+.list-row:hover,
+.list-row.active {
+  background: var(--selected);
 }
 
 .list-select {
@@ -214,13 +225,13 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 12px;
+  padding: 12px;
   border: 0;
   background: transparent;
   text-align: left;
   font-size: var(--text-body);
   line-height: 1.4;
-  cursor: text;
+  cursor: pointer;
 }
 
 .folder-icon {
@@ -236,9 +247,7 @@ button {
 
 .list-select span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .list-row:hover .list-select,
@@ -248,10 +257,10 @@ button {
 
 .list-row.active::before {
   position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: -9px;
-  width: 4px;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
   border-radius: 99px;
   background: var(--accent);
   content: "";
@@ -303,7 +312,7 @@ button {
 }
 
 .sidebar nav > .add-list {
-  height: 72px;
+  height: 48px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -316,13 +325,19 @@ button {
   cursor: pointer;
 }
 
+.sidebar nav > .add-list:hover {
+  border-radius: 7px;
+  background: var(--selected);
+  color: var(--ink);
+}
+
 .sidebar nav > .add-list span[aria-hidden="true"] {
   font-size: 25px;
   line-height: 1;
 }
 
 .new-list {
-  height: 72px;
+  height: 48px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--line);
@@ -602,7 +617,7 @@ body:has(.notes-sidebar) {
 
 .page-header {
   position: relative;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .time-heading {
@@ -818,7 +833,7 @@ body:has(.notes-sidebar) {
   margin: 0;
   overflow: hidden;
   padding-inline: 6px;
-  border: 0;
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
@@ -975,7 +990,7 @@ body:has(.notes-sidebar) {
 }
 
 .capture-section {
-  margin-bottom: 38px;
+  margin-bottom: 30px;
 }
 
 .capture-box {
@@ -983,7 +998,7 @@ body:has(.notes-sidebar) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 13px;
   background: var(--capture-surface);
   box-shadow: 0 2px 5px color-mix(in srgb, var(--shadow-popover) 18%, transparent);
@@ -1016,17 +1031,17 @@ body:has(.notes-sidebar) {
 
 .entry-mode-switch {
   min-width: 72px;
-  height: 40px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
   padding-inline: 13px;
-  border: 0;
+  border: 1px solid var(--control-border);
   border-radius: 7px;
   background: var(--selected);
-  color: var(--muted);
-  font-size: var(--text-caption);
+  color: var(--ink);
+  font-size: var(--text-body-sm);
   font-weight: 500;
   cursor: pointer;
   transition-property: scale, background-color, color, box-shadow;
@@ -1067,13 +1082,13 @@ body:has(.notes-sidebar) {
 
 .capture-box select {
   width: 92px;
-  height: 42px;
+  height: 44px;
   padding-inline: 12px;
-  border: 0;
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   outline: 0;
   background: var(--selected);
-  color: var(--muted);
+  color: var(--ink);
   font-size: var(--text-body-sm);
   cursor: pointer;
   transition-property: background-color, color;
@@ -1946,24 +1961,21 @@ input:focus-visible {
   }
 
   .wordmark {
-    margin-bottom: 16px;
+    margin: 0 0 12px;
     font-size: 31px;
   }
 
   .sidebar nav {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 8px;
     overflow-x: auto;
+    padding-bottom: 8px;
   }
 
   .sidebar-section-label {
-    position: sticky;
-    left: 0;
-    z-index: 1;
     flex: none;
-    margin: 0;
-    background: var(--paper);
+    margin: 0 8px 0 0;
   }
 
   .notes-sidebar {
@@ -1982,25 +1994,27 @@ input:focus-visible {
 
   .list-row {
     flex: 0 0 auto;
-    height: 44px;
+    max-width: min(280px, 75vw);
+    min-height: 44px;
     border: 0;
-    grid-template-columns: auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .list-select {
-    height: 44px;
-    padding: 0;
+    min-height: 44px;
+    padding: 8px 10px;
     font-size: 15px;
   }
 
   .sidebar nav > .add-list {
     width: auto;
     flex: none;
+    height: 44px;
     font-size: 14px;
   }
 
   .list-row.active::before {
-    inset: auto 0 0;
+    inset: auto 10px 0;
     width: auto;
     height: 3px;
   }
@@ -2029,7 +2043,7 @@ input:focus-visible {
   }
 
   .workspace-content {
-    padding: 30px 28px 0;
+    padding: 24px 28px 0;
   }
 
   .playback-bar {
@@ -2051,7 +2065,7 @@ input:focus-visible {
   }
 
   .sidebar nav {
-    gap: 24px;
+    gap: 8px;
   }
 
   .notes-sidebar-header {
@@ -2109,10 +2123,6 @@ input:focus-visible {
 
   .capture-actions {
     gap: 8px;
-  }
-
-  .entry-mode-switch {
-    height: 40px;
   }
 
   .capture-box input {

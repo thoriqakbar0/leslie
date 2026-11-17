@@ -85,6 +85,16 @@ nub run build
 
 If a check cannot run in your environment, say which command you skipped and why in the pull request.
 
+### Verify interface changes
+
+Capture the production Electron window before and after an interface change with synthetic tasks and folders. Check the default 1100 × 760 window and the minimum 720 × 520 window in light and dark mode.
+
+Preserve the paper and ink color tokens and serif headings in `src/index.css`. Folder rows use a compact selected surface and an accent marker. Keep folder navigation scrollable when the list exceeds the available space, with visible keyboard focus inside the scroll area.
+
+Keep light surfaces below bright white and use softer text on dark surfaces. Measure text and control contrast after palette changes in both themes. Use `--control-border` for field boundaries and `--line` for decorative dividers.
+
+Check folder selection and creation, capture mode switching, expected-time selection, date selection, and task playback. Confirm that controls remain distinguishable and that the page has no horizontal overflow at the minimum window size. Keep before and after screenshots with the review evidence.
+
 ## Open a pull request
 
 In the pull request description:
